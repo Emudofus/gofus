@@ -1,12 +1,12 @@
 package main
 
 import (
+	"flag"
+	"github.com/Blackrush/gofus/game"
+	"github.com/Blackrush/gofus/login"
+	"log"
 	"os"
 	"os/signal"
-	"flag"
-	"log"
-	"github.com/Blackrush/gofus/login"
-	"github.com/Blackrush/gofus/game"
 )
 
 type StartStopper interface {
@@ -23,13 +23,13 @@ func main() {
 
 	Server = get_server()
 
-	if err := server.Start(); err != nil {
+	if err := Server.Start(); err != nil {
 		log.Fatal(err)
 	}
 
 	<-wait()
 
-	if err := server.Stop(); err != nil {
+	if err := Server.Stop(); err != nil {
 		log.Fatal(err)
 	}
 }
