@@ -1,9 +1,9 @@
-/**
- * @author Blackrush
- */
+/*
+  multiple tree implementations
+*/
 package tree
 
-type any interface {}
+type any interface{}
 
 type StringTree interface {
 	Parent() StringTree
@@ -21,14 +21,14 @@ type StringTree interface {
 
 type stringTreeImpl struct {
 	parent *stringTreeImpl
-	path string
-	value any
+	path   string
+	value  any
 
 	children map[rune]*stringTreeImpl
 }
 
 func NewStringTree() StringTree {
-	return &stringTreeImpl {
+	return &stringTreeImpl{
 		nil,
 		"",
 		nil,
@@ -37,10 +37,10 @@ func NewStringTree() StringTree {
 }
 
 func newStringTreeImpl(path string, value any, parent *stringTreeImpl) *stringTreeImpl {
-	return &stringTreeImpl {
-		path: path,
-		value: value,
-		parent: parent,
+	return &stringTreeImpl{
+		path:     path,
+		value:    value,
+		parent:   parent,
 		children: make(map[rune]*stringTreeImpl),
 	}
 }

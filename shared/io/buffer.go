@@ -1,3 +1,6 @@
+/*
+  some io utils
+*/
 package io
 
 import (
