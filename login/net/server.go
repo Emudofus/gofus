@@ -1,9 +1,8 @@
-package login
+package net
 
 import (
 	"flag"
-	"github.com/Blackrush/gofus/shared"
-	sio "github.com/Blackrush/gofus/shared/io"
+	sio "github.com/Nyasu/gofus/shared/io"
 	"log"
 	"net"
 )
@@ -18,39 +17,45 @@ var (
 	delimiter = []byte("\u0000")
 )
 
-type connectMsg struct {
+type baseMsg struct {
+	net  *network
 	conn net.Conn
-	new  bool
+}
+
+func (msg *baseMsg) Write(b []byte) (int, error) {
+	data := append(b, delimiter...)
+	return msg.conn.Write(data)
+}
+
+type connectMsg struct {
+	*baseMsg
+	new bool
 }
 
 type rcvMsg struct {
-	conn net.Conn
+	*baseMsg
 	data []byte
 }
 
 type network struct {
+	debug   bool
 	run     bool
 	connect chan connectMsg
 	rcv     chan rcvMsg
 }
 
-func new_network() *network {
+// This method returns a new login server
+func NewServer(debug bool) *network {
 	return &network{
+		debug,
 		false,
 		make(chan connectMsg),
 		make(chan rcvMsg),
 	}
 }
 
-// This method returns a new login server
-func NewNetworkServer() shared.Server {
-	return new_network()
-}
-
 // This method implements Starter and automatically call network.Serve()
 func (network *network) Start() error {
-	network.run = true
-
 	for i := 0; i < *workers; i++ {
 		go network.create_worker()
 	}
@@ -68,7 +73,9 @@ func (network *network) Stop() error {
 
 // This method implements Server
 func (network *network) Serve() {
-	listener, err := net.Listen("net", *laddr)
+	network.run = true
+
+	listener, err := net.Listen("tcp", *laddr)
 
 	if err != nil {
 		panic(err)
@@ -83,22 +90,23 @@ func (network *network) Serve() {
 			panic(err)
 		}
 
-		network.connect <- connectMsg{conn, true}
+		network.connect <- connectMsg{&baseMsg{network, conn}, true}
 		go network.serve_client(conn)
 	}
 }
 
 func (network *network) serve_client(conn net.Conn) {
+	msg := baseMsg{network, conn}
+	buf := sio.BufferLimit(conn, chunkLen, delimiter)
+
 	defer func() {
 		conn.Close()
-		network.connect <- connectMsg{conn, false}
+		network.connect <- connectMsg{&msg, false}
 	}()
-
-	buf := sio.BufferLimit(conn, chunkLen, delimiter)
 
 	for network.run {
 		if data, ok := <-buf; ok {
-			network.rcv <- rcvMsg{conn, data}
+			network.rcv <- rcvMsg{&msg, data}
 		} else {
 			break
 		}
@@ -108,11 +116,18 @@ func (network *network) serve_client(conn net.Conn) {
 func (network *network) create_worker() {
 	for network.run {
 		select {
-		case <-network.connect: // todo
+		case msg := <-network.connect:
+			if err := handle_connect(msg); err != nil {
+				if network.debug {
+					log.Println(err)
+				} else if msg.new {
+					msg.conn.Close()
+				}
+			}
 
 		case msg := <-network.rcv:
 			if err := handle_rcv(msg); err != nil {
-				if *debug {
+				if network.debug {
 					log.Println(err)
 				} else {
 					msg.conn.Close()

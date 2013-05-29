@@ -1,8 +1,9 @@
 package login
 
 import (
-	"github.com/Blackrush/gofus/shared"
 	"flag"
+	"github.com/Nyasu/gofus/login/net"
+	"github.com/Nyasu/gofus/shared"
 )
 
 var (
@@ -10,19 +11,19 @@ var (
 )
 
 type server struct {
-	net *network
+	net shared.Server
 }
 
 // Create a new login server
 func NewServer() shared.StartStopper {
 	return &server{
-		new_network(),
+		net.NewServer(*debug),
 	}
 }
 
 // Start login server without blocking
 func (server *server) Start() (err error) {
-	if err = server.net.Start(); err != nil {
+	if err = shared.Start(server.net); err != nil {
 		return
 	}
 
@@ -31,7 +32,7 @@ func (server *server) Start() (err error) {
 
 // Stop login server without blocking
 func (server *server) Stop() (err error) {
-	if err = server.net.Stop(); err != nil {
+	if err = shared.Stop(server.net); err != nil {
 		return
 	}
 
