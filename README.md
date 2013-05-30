@@ -5,11 +5,18 @@ Gofus is a Dofus 1.29 emulator written in Go.
 
 ## Installation
 
-**todo** *currently, there isn't any commands*
+```bash
+go get github.com/Nyasu/gofus/login
+```
 
 ## Usage
 
-**todo** *see [Installation](#installation)*
+```bash
+cd $GOPATH/bin
+./login -h # print usage and available flags
+./login # run gofus login server
+./login -debug # run gofus login server in debug mode
+```
 
 ## Documentation
 
