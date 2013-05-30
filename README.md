@@ -20,4 +20,4 @@ cd $GOPATH/bin
 
 ## Documentation
 
-on [godoc.org](http://godoc.org/github.com/Blackrush/gofus)
+on [godoc.org](http://godoc.org/github.com/Nyasu/gofus)
