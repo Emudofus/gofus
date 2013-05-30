@@ -1,9 +1,10 @@
-package login
+package main
 
 import (
 	"flag"
-	"github.com/Nyasu/gofus/shared"
+	"fmt"
 	login "github.com/Nyasu/gofus/login/server"
+	"github.com/Nyasu/gofus/shared"
 	"log"
 	"os"
 	"os/signal"
@@ -17,9 +18,8 @@ func main() {
 	Server = login.NewServer()
 
 	check_error(Server.Start())
-	defer check_error(Server.Stop())
-
-	wait()
+	wait(true)
+	check_error(Server.Stop())
 }
 
 func check_error(err error) {
@@ -28,8 +28,13 @@ func check_error(err error) {
 	}
 }
 
-func wait() {
+func wait(print bool) {
 	hook := make(chan os.Signal, 1)
 	signal.Notify(hook, os.Kill, os.Interrupt)
+
+	if print {
+		fmt.Println("press C-c to shutdown")
+	}
+
 	<-hook
 }

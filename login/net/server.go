@@ -23,6 +23,11 @@ type baseMsg struct {
 }
 
 func (msg *baseMsg) Write(b []byte) (int, error) {
+	log.Printf("new outcoming data to %s (%d bytes)", msg.conn.RemoteAddr(), len(b))
+	if msg.net.debug {
+		println(string(b))
+	}
+
 	data := append(b, delimiter...)
 	return msg.conn.Write(data)
 }
@@ -56,10 +61,11 @@ func NewServer(debug bool) *network {
 
 // This method implements Starter and automatically call network.Serve()
 func (network *network) Start() error {
+	go network.Serve()
+
 	for i := 0; i < *workers; i++ {
 		go network.create_worker()
 	}
-	go network.Serve()
 
 	return nil
 }
@@ -90,22 +96,28 @@ func (network *network) Serve() {
 			panic(err)
 		}
 
-		network.connect <- connectMsg{&baseMsg{network, conn}, true}
 		go network.serve_client(conn)
 	}
 }
 
 func (network *network) serve_client(conn net.Conn) {
+	log.Printf("new client %s", conn.RemoteAddr())
+
 	msg := baseMsg{network, conn}
 	buf := sio.BufferLimit(conn, chunkLen, delimiter)
+
+	network.connect <- connectMsg{&msg, true}
 
 	defer func() {
 		conn.Close()
 		network.connect <- connectMsg{&msg, false}
+		log.Printf("client %s is gone", conn.RemoteAddr())
 	}()
 
 	for network.run {
 		if data, ok := <-buf; ok {
+			log.Printf("new incoming data from %s (%d bytes)", conn.RemoteAddr(), len(data))
+
 			network.rcv <- rcvMsg{&msg, data}
 		} else {
 			break

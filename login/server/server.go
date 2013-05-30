@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/Nyasu/gofus/login/net"
 	"github.com/Nyasu/gofus/shared"
+	"log"
 )
 
 var (
@@ -27,6 +28,8 @@ func (server *server) Start() (err error) {
 		return
 	}
 
+	log.Print("login server started without error")
+
 	return nil
 }
 
@@ -35,6 +38,8 @@ func (server *server) Stop() (err error) {
 	if err = shared.Stop(server.net); err != nil {
 		return
 	}
+
+	log.Print("login server stopped without error")
 
 	return nil
 }
