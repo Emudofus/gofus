@@ -5,7 +5,7 @@ import (
 	"os/signal"
 	"fmt"
 	"flag"
-	"github.com/Blackrush/photon/login/network"
+	"github.com/Blackrush/gofus/login/network"
 )
 
 var (
