@@ -4,6 +4,9 @@
 !.gitkeep
 *~
 
+# Travis
+!.travis.yml
+
 # OSX
 .DS_Store
 .AppleDouble
