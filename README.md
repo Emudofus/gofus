@@ -1,4 +1,4 @@
-gofus [![Build Status](https://drone.io/github.com/Blackrush/gofus/status.png)](https://drone.io/github.com/Blackrush/gofus/latest)
+gofus [![Build Status](https://travis-ci.org/Blackrush/gofus.png?branch=master)](https://travis-ci.org/Blackrush/gofus)
 =====
 
 Gofus is a Dofus 1.29 emulator written in Go.
