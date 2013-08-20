@@ -9,7 +9,6 @@ import (
 	"io"
 	"log"
 	"math/rand"
-//	"strings"
 	"time"
 )
 
@@ -22,11 +21,13 @@ const (
 	clientVersion = "1.29.1"
 )
 
+// TODO: Interface
 type task struct {
 	client Client
 	data []byte
 }
 
+// TODO: Interface
 type event struct {
 	client Client
 	login bool
@@ -61,7 +62,8 @@ func New(config Configuration) shared.StartStopper {
 
 func (ctx *context) Start() {
 	if ctx.running {
-		panic("network service already started")
+		// Should that panic? It could get over it or return an error
+		log.Panic("network service already started")
 	}
 	ctx.running = true
 
@@ -109,7 +111,8 @@ func start_server(ctx *context) {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.config.Port))
 
 	if err != nil {
-		panic(fmt.Sprintf("can't listen on %d because: %s", ctx.config.Port, err.Error()))
+		// No need to stacktrace & shits, the error should be mentioned
+		log.Fatal(fmt.Sprintf("can't listen on %d because: %s", ctx.config.Port, err.Error()))
 	}
 
 	defer listener.Close()
@@ -121,7 +124,9 @@ func start_server(ctx *context) {
 		conn, err := listener.Accept()
 
 		if err != nil {
-			panic(fmt.Sprintf("can't accept a connection on %d because: %s", ctx.config.Port, err.Error()))
+			// No need to panic, the error concerns only new clients; just log and continue (might want to alert the admin though :<)
+			log.Print(fmt.Sprintf("can't accept a connection on %d because: %s", ctx.config.Port, err.Error()))
+			continue
 		}
 
 		go handle_conn(ctx, conn)
@@ -148,7 +153,8 @@ func handle_conn(ctx *context, conn net.Conn) {
 			break
 		}
 		if err != nil {
-			panic(fmt.Sprintf("can't read data from %s because: %s", conn.RemoteAddr(), err.Error()))
+			// Panic or Fatal? The error should be mentioned
+			log.Panic(fmt.Sprintf("can't read data from %s because: %s", conn.RemoteAddr(), err.Error()))
 		}
 
 		received := chunk[:n]
@@ -223,6 +229,8 @@ func handle_client_data(ctx *context, client Client, data string) {
 	case LoginState:
 	case RealmState:
 	default:
-		panic(fmt.Sprintf("unknown state %d of client #%d", client.State(), client.Id()))
+		// No need to panic, it's only one client who got lost; just log and kick him out
+		log.Print(fmt.Sprintf("unknown state %d of client #%d", client.State(), client.Id()))
+		close_conn(ctx, client)
 	}
 }
