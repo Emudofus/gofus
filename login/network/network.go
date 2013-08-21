@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"net"
 	"fmt"
-	"github.com/Blackrush/gofus/protocol/msg"
 	"github.com/Blackrush/gofus/shared"
 	"io"
 	"log"
@@ -20,18 +19,6 @@ const (
 	messageDelimiter = "\n\u0000"
 	clientVersion = "1.29.1"
 )
-
-// TODO: Interface
-type task struct {
-	client Client
-	data []byte
-}
-
-// TODO: Interface
-type event struct {
-	client Client
-	login bool
-}
 
 type context struct {
 	running bool
@@ -62,8 +49,7 @@ func New(config Configuration) shared.StartStopper {
 
 func (ctx *context) Start() {
 	if ctx.running {
-		// Should that panic? It could get over it or return an error
-		log.Panic("network service already started")
+		return // just get over it, don't return error (see Starter doc)
 	}
 	ctx.running = true
 
@@ -111,8 +97,7 @@ func start_server(ctx *context) {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.config.Port))
 
 	if err != nil {
-		// No need to stacktrace & shits, the error should be mentioned
-		log.Fatal(fmt.Sprintf("can't listen on %d because: %s", ctx.config.Port, err.Error()))
+		log.Panic("can't listen on ", ctx.config.Port, " because: ", err.Error())
 	}
 
 	defer listener.Close()
@@ -125,7 +110,7 @@ func start_server(ctx *context) {
 
 		if err != nil {
 			// No need to panic, the error concerns only new clients; just log and continue (might want to alert the admin though :<)
-			log.Print(fmt.Sprintf("can't accept a connection on %d because: %s", ctx.config.Port, err.Error()))
+			log.Print("can't accept a connection on ", ctx.config.Port, " because: ", err.Error())
 			continue
 		}
 
@@ -154,7 +139,7 @@ func handle_conn(ctx *context, conn net.Conn) {
 		}
 		if err != nil {
 			// Panic or Fatal? The error should be mentioned
-			log.Panic(fmt.Sprintf("can't read data from %s because: %s", conn.RemoteAddr(), err.Error()))
+			log.Panic("can't read data from ", conn.RemoteAddr(), " because: ", err.Error())
 		}
 
 		received := chunk[:n]
@@ -183,54 +168,4 @@ func handle_conn(ctx *context, conn net.Conn) {
 func close_conn(ctx *context, client Client) {
 	client.Close()
 	ctx.events <- event { client: client, login: false }
-}
-
-func worker(ctx *context) {
-	for ctx.running {
-		select {
-		case task := <-ctx.tasks:
-			handle_client_data(ctx, task.client, string(task.data))
-		case event := <-ctx.events:
-			if event.login {
-				handle_client_connection(ctx, event.client)
-			} else {
-				handle_client_disconnection(ctx, event.client)
-			}
-		}
-	}
-}
-
-func handle_client_connection(ctx *context, client Client) {
-	ctx.clients[client.Id()] = client
-	log.Print("new client connected with id=", client.Id())
-
-	client.Send(&msg.HelloConnect{ Ticket: client.Ticket() })
-	client.SetState(VersionState)
-}
-
-func handle_client_disconnection(ctx *context, client Client) {
-	delete(ctx.clients, client.Id())
-	log.Print("client #", client.Id(), " disconnected")
-}
-
-func handle_client_data(ctx *context, client Client, data string) {
-	log.Print("received ", len(data), " bytes `", data, "` from client #", client.Id())
-
-	println("state=", client.State())
-
-	switch client.State() {
-	case VersionState:
-		if clientVersion == data {
-			client.SetState(LoginState)
-		} else {
-			client.Send(&msg.BadVersion{ Required: clientVersion })
-			client.Close()
-		}
-	case LoginState:
-	case RealmState:
-	default:
-		// No need to panic, it's only one client who got lost; just log and kick him out
-		log.Print(fmt.Sprintf("unknown state %d of client #%d", client.State(), client.Id()))
-		close_conn(ctx, client)
-	}
 }
