@@ -151,12 +151,15 @@ func handle_conn(ctx *context, conn net.Conn) {
 				break
 			}
 
-			data := make([]byte, index + len(buffer))
+			var data []byte
 			if len(buffer) > 0 {
-				data = append(data, buffer...)
-				buffer = nil
+				data = make([]byte, len(buffer) + index)
+				copy(data, buffer)
+				copy(data[len(buffer):], received[:index])
+			} else {
+				data = make([]byte, index)
+				copy(data, received[:index])
 			}
-			data = append(data, received[:index]...)
 
 			ctx.tasks <- task { client, data }
 
