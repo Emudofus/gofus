@@ -40,3 +40,25 @@ func (msg *BadVersion) Deserialize(in io.Reader) error {
 	fmt.Fscanf(in, "AlEv%s", &msg.Required)
 	return nil
 }
+
+type LoginError struct {}
+
+func (msg *LoginError) Opcode() string {
+	return "AlEf"
+}
+
+func (msg *LoginError) Serialize(out io.Writer) error {
+	fmt.Fprint(out, "AlEf")
+	return nil
+}
+
+func (msg *LoginError) Deserialize(in io.Reader) error { return nil }
+
+type QueueStatusRequest struct {}
+
+func (msg *QueueStatusRequest) Opcode() string {
+	return "Af"
+}
+
+func (msg *QueueStatusRequest) Serialize(out io.Writer) error { return nil }
+func (msg *QueueStatusRequest) Deserialize(in io.Reader) error { return nil }

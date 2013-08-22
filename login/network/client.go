@@ -2,7 +2,7 @@ package network
 
 import (
 	"bytes"
-	"github.com/Blackrush/gofus/protocol"
+	"github.com/Blackrush/photon/protocol"
 	"io"
 	"log"
 	"net"
@@ -38,9 +38,9 @@ type Client interface {
 type netClient struct {
 	net.Conn
 
-	id int
+	id     int
 	ticket string
-	state ClientState
+	state  ClientState
 }
 
 func (client *netClient) Id() int {
@@ -76,7 +76,7 @@ func (client *netClient) Send(msg protocol.MessageContainer) (int, error) {
 }
 
 func NewNetClient(conn net.Conn, id int, ticket string) Client {
-	return &netClient {
+	return &netClient{
 		conn,
 		id,
 		ticket,

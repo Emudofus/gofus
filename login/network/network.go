@@ -2,54 +2,67 @@ package network
 
 import (
 	"bytes"
-	"net"
+	"database/sql"
 	"fmt"
 	"github.com/Blackrush/gofus/shared"
 	"io"
 	"log"
 	"math/rand"
+	"net"
 	"time"
 )
 
 const (
-	bufferLen = 64
-	tasksQueueLen = 100
-	eventsQueueLen = 100
-	clientTicketLen = 32
+	bufferLen        = 64
+	tasksQueueLen    = 100
+	eventsQueueLen   = 100
+	clientTicketLen  = 32
 	messageDelimiter = "\n\u0000"
-	clientVersion = "1.29.1"
+	clientVersion    = "1.29.1"
 )
 
-type context struct {
-	running bool
-	tasks chan task
-	events chan event
-	nextClientId chan int
-	nextClientTicket chan string
-	clients map[int]Client
+type task struct {
+	client Client
+	data   []byte
+}
 
+type event struct {
+	client Client
+	login  bool
+}
+
+type context struct {
+	running          bool
+	tasks            chan task
+	events           chan event
+	nextClientId     chan int
+	nextClientTicket chan string
+	clients          map[int]Client
+
+	db     *sql.DB
 	config Configuration
 }
 
 type Configuration struct {
-	Port uint16
+	Port      uint16
 	NbWorkers int
 }
 
-func New(config Configuration) shared.StartStopper {
+func New(db *sql.DB, config Configuration) shared.StartStopper {
 	return &context{
-		tasks: make(chan task, tasksQueueLen),
-		events: make(chan event, eventsQueueLen),
-		nextClientId: make(chan int),
+		tasks:            make(chan task, tasksQueueLen),
+		events:           make(chan event, eventsQueueLen),
+		nextClientId:     make(chan int),
 		nextClientTicket: make(chan string),
-		clients: make(map[int]Client),
-		config: config,
+		clients:          make(map[int]Client),
+		db:               db,
+		config:           config,
 	}
 }
 
 func (ctx *context) Start() {
 	if ctx.running {
-		return // just get over it, don't return error (see Starter doc)
+		panic("network service already started")
 	}
 	ctx.running = true
 
@@ -97,7 +110,7 @@ func start_server(ctx *context) {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.config.Port))
 
 	if err != nil {
-		log.Panic("can't listen on ", ctx.config.Port, " because: ", err.Error())
+		panic(fmt.Sprintf("can't listen on %d because: %s", ctx.config.Port, err.Error()))
 	}
 
 	defer listener.Close()
@@ -109,9 +122,7 @@ func start_server(ctx *context) {
 		conn, err := listener.Accept()
 
 		if err != nil {
-			// No need to panic, the error concerns only new clients; just log and continue (might want to alert the admin though :<)
-			log.Print("can't accept a connection on ", ctx.config.Port, " because: ", err.Error())
-			continue
+			panic(fmt.Sprintf("can't accept a connection on %d because: %s", ctx.config.Port, err.Error()))
 		}
 
 		go handle_conn(ctx, conn)
@@ -129,7 +140,7 @@ func handle_conn(ctx *context, conn net.Conn) {
 
 	defer close_conn(ctx, client)
 
-	ctx.events <- event { client: client, login: true }
+	ctx.events <- event{client: client, login: true}
 
 	for ctx.running {
 		n, err := conn.Read(chunk[0:])
@@ -138,8 +149,7 @@ func handle_conn(ctx *context, conn net.Conn) {
 			break
 		}
 		if err != nil {
-			// Panic or Fatal? The error should be mentioned
-			log.Panic("can't read data from ", conn.RemoteAddr(), " because: ", err.Error())
+			panic(fmt.Sprintf("can't read data from %s because: %s", conn.RemoteAddr(), err.Error()))
 		}
 
 		received := chunk[:n]
@@ -151,17 +161,14 @@ func handle_conn(ctx *context, conn net.Conn) {
 				break
 			}
 
-			var data []byte
+			data := make([]byte, index+len(buffer))
 			if len(buffer) > 0 {
-				data = make([]byte, len(buffer) + index)
-				copy(data, buffer)
-				copy(data[len(buffer):], received[:index])
-			} else {
-				data = make([]byte, index)
-				copy(data, received[:index])
+				data = append(data, buffer...)
+				buffer = nil
 			}
+			data = append(data, received[:index]...)
 
-			ctx.tasks <- task { client, data }
+			ctx.tasks <- task{client, data}
 
 			received = received[index+len(messageDelimiter):]
 		}
@@ -170,5 +177,5 @@ func handle_conn(ctx *context, conn net.Conn) {
 
 func close_conn(ctx *context, client Client) {
 	client.Close()
-	ctx.events <- event { client: client, login: false }
+	ctx.events <- event{client: client, login: false}
 }

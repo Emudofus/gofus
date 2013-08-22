@@ -1,7 +1,10 @@
 package network
 
 import (
+	"database/sql"
+	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/protocol/msg"
+	"github.com/Blackrush/gofus/shared"
 	"log"
 )
 
@@ -21,6 +24,8 @@ func handle_client_disconnection(ctx *context, client Client) {
 func handle_client_data(ctx *context, client Client, data string) {
 	log.Print("received ", len(data), " bytes `", data, "` from client #", client.Id())
 
+	users := db.Users{ctx.db}
+
 	switch client.State() {
 	case VersionState:
 		if clientVersion == data {
@@ -30,6 +35,19 @@ func handle_client_data(ctx *context, client Client, data string) {
 			client.Close()
 		}
 	case LoginState:
+		username, password := shared.Split2(data, "\n")
+		log.Print("user '", username, "' wants to login")
+
+		user, err := users.FindByName(username)
+		if err == sql.ErrNoRows {
+			client.Send(&msg.LoginError{})
+			client.Close()
+		} else if err != nil {
+			log.Print("can't log '", username, "' because: ", err)
+			client.Close()
+		} else {
+
+		}
 	case RealmState:
 	default:
 		// No need to panic, it's only one client who got lost; just log and kick him out
