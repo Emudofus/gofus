@@ -35,10 +35,10 @@ func handle_client_data(ctx *context, client Client, data string) {
 			client.Close()
 		}
 	case LoginState:
-		username, password := shared.Split2(data, "\n")
+		username, _ := shared.Split2(data, "\n")
 		log.Print("user '", username, "' wants to login")
 
-		user, err := users.FindByName(username)
+		_, err := users.FindByName(username)
 		if err == sql.ErrNoRows {
 			client.Send(&msg.LoginError{})
 			client.Close()

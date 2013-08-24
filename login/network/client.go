@@ -2,7 +2,7 @@ package network
 
 import (
 	"bytes"
-	"github.com/Blackrush/photon/protocol"
+	"github.com/Blackrush/gofus/protocol"
 	"io"
 	"log"
 	"net"

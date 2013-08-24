@@ -1,11 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"os"
 	"os/signal"
 	"fmt"
 	"flag"
 	"github.com/Blackrush/gofus/login/network"
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -25,7 +27,12 @@ func main() {
 	fmt.Println("\\==============/")
 	fmt.Println()
 
-	networkService := network.New(network.Configuration {
+	db, err := sql.Open("postgres", "user=root dbname=gofus")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	networkService := network.New(db, network.Configuration {
 		Port: uint16(*port),
 		NbWorkers: *nbWorkers,
 	})

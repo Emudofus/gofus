@@ -21,16 +21,6 @@ const (
 	clientVersion    = "1.29.1"
 )
 
-type task struct {
-	client Client
-	data   []byte
-}
-
-type event struct {
-	client Client
-	login  bool
-}
-
 type context struct {
 	running          bool
 	tasks            chan task
@@ -161,12 +151,15 @@ func handle_conn(ctx *context, conn net.Conn) {
 				break
 			}
 
-			data := make([]byte, index+len(buffer))
+			var data []byte
 			if len(buffer) > 0 {
-				data = append(data, buffer...)
-				buffer = nil
+				data = make([]byte, index+len(buffer))
+				copy(data, buffer)
+				copy(data[len(buffer):], received)
+			} else {
+				data = make([]byte, index)
+				copy(data, received)
 			}
-			data = append(data, received[:index]...)
 
 			ctx.tasks <- task{client, data}
 
