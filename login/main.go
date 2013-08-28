@@ -1,45 +1,50 @@
 package main
 
 import (
-	"database/sql"
-	"os"
-	"os/signal"
-	"fmt"
 	"flag"
+	"fmt"
+	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/login/network"
 	_ "github.com/lib/pq"
+	"os"
+	"os/signal"
 )
 
 var (
-	port = flag.Int("port", 5555, "the port the server will listen on")
+	port      = flag.Int("port", 5555, "the port the server will listen on")
 	nbWorkers = flag.Int("nbWorkers", 1, "the number of workers to start")
 )
 
-func wait_user_input() {
-	sig := make(chan os.Signal)
+func wait_user_input() <-chan os.Signal {
+	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Kill, os.Interrupt)
-	<-sig
+	return sig
 }
 
 func main() {
-	fmt.Println("/==============\\")
-	fmt.Println("| PHOTON ALPHA |")
-	fmt.Println("\\==============/")
-	fmt.Println()
+	fmt.Println(` _______  _______  _______           _______           .-.        .-.           
+(  ____ \(  ___  )(  ____ \|\     /|(  ____ \          : :        : :           
+| (    \/| (   ) || (    \/| )   ( || (    \/    .--.  : :  .---. : -..  .--.   
+| |      | |   | || (__    | |   | || (_____    ; .; ; : :_ :  .; : .. :' .; ;  
+| | ____ | |   | ||  __)   | |   | |(_____  )   .__,_; .___;:._.' :_;:_;.__,_; 
+| | \_  )| |   | || (      | |   | |      ) |    Blackrush  : :                 
+| (___) || (___) || )      | (___) |/\____) |               :_;                 
+(_______)(_______)|/       (_______)\_______) 
+`)
 
-	db, err := sql.Open("postgres", "user=root dbname=gofus")
-	if err != nil {
-		panic(err.Error())
-	}
+	database := db.Open(&db.Configuration{
+		Driver:         "postgres",
+		DataSourceName: "user=postgres dbname=gofus password=bla sslmode=disable",
+	})
 
-	networkService := network.New(db, network.Configuration {
-		Port: uint16(*port),
+	networkService := network.New(database, network.Configuration{
+		Port:      uint16(*port),
 		NbWorkers: *nbWorkers,
 	})
 
 	go networkService.Start()
 
-	wait_user_input()
+	<-wait_user_input()
 
 	networkService.Stop()
 }
