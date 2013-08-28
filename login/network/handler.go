@@ -10,7 +10,7 @@ import (
 
 func handle_client_connection(ctx *context, client Client) {
 	ctx.clients[client.Id()] = client
-	log.Print("new client connected with id=", client.Id())
+	log.Printf("client #%04d [connected]", client.Id())
 
 	client.Send(&msg.HelloConnect{Ticket: client.Ticket()})
 	client.SetState(VersionState)
@@ -18,7 +18,7 @@ func handle_client_connection(ctx *context, client Client) {
 
 func handle_client_disconnection(ctx *context, client Client) {
 	delete(ctx.clients, client.Id())
-	log.Print("client #", client.Id(), " disconnected")
+	log.Printf("client #%04d [disconnected]", client.Id())
 }
 
 func authenticate(ctx *context, client Client, user *db.User, data string) bool {
@@ -36,7 +36,7 @@ func authenticate(ctx *context, client Client, user *db.User, data string) bool 
 }
 
 func handle_client_data(ctx *context, client Client, data string) {
-	log.Print("received ", len(data), " bytes `", data, "` from client #", client.Id())
+	log.Printf("client #%04d (%03d bytes)<<<%s", client.Id(), len(data), data)
 
 	users := db.Users{ctx.db}
 
@@ -59,6 +59,12 @@ func handle_client_data(ctx *context, client Client, data string) {
 			log.Print("can't log '", username, "' because: ", err)
 			client.Close()
 		} else if authenticate(ctx, client, user, data) {
+			client.Send(&msg.SetNickname{user.Nickname})
+			client.Send(&msg.SetCommunity{0})
+			client.Send(&msg.LoginSuccess{false})
+			client.Send(&msg.SetSecretQuestion{user.SecretQuestion})
+
+			client.SetState(RealmState)
 		}
 	case RealmState:
 	default:

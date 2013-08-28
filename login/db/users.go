@@ -109,7 +109,7 @@ func (db *Users) FindById(id int) (*User, error) {
 }
 
 func (db *Users) FindByName(name string) (*User, error) {
-	return db.find("select id, name, password, nickname, secret_question, secret_answer, rights from users where name=$2", name)
+	return db.find("select id, name, password, nickname, secret_question, secret_answer, rights from users where name=$1", name)
 }
 
 func (db *Users) FindAll() ([]*User, error) {

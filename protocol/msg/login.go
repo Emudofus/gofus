@@ -3,6 +3,7 @@ package msg
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 type HelloConnect struct {
@@ -50,3 +51,47 @@ type QueueStatusRequest struct{}
 func (msg *QueueStatusRequest) Opcode() string                 { return "Af" }
 func (msg *QueueStatusRequest) Serialize(out io.Writer) error  { return nil }
 func (msg *QueueStatusRequest) Deserialize(in io.Reader) error { return nil }
+
+type SetNickname struct {
+	Nickname string
+}
+
+func (msg *SetNickname) Opcode() string { return "Ad" }
+func (msg *SetNickname) Serialize(out io.Writer) error {
+	fmt.Fprint(out, msg.Nickname)
+	return nil
+}
+func (msg *SetNickname) Deserialize(in io.Reader) error { return nil }
+
+type SetCommunity struct {
+	CommunityId int
+}
+
+func (msg *SetCommunity) Opcode() string { return "Ac" }
+func (msg *SetCommunity) Serialize(out io.Writer) error {
+	fmt.Fprint(out, msg.CommunityId)
+	return nil
+}
+func (msg *SetCommunity) Deserialize(in io.Reader) error { return nil }
+
+type LoginSuccess struct {
+	IsAdmin bool
+}
+
+func (msg *LoginSuccess) Opcode() string { return "AlK" }
+func (msg *LoginSuccess) Serialize(out io.Writer) error {
+	fmt.Fprint(out, btoi(msg.IsAdmin))
+	return nil
+}
+func (msg *LoginSuccess) Deserialize(in io.Reader) error { return nil }
+
+type SetSecretQuestion struct {
+	SecretQuestion string
+}
+
+func (msg *SetSecretQuestion) Opcode() string { return "AQ" }
+func (msg *SetSecretQuestion) Serialize(out io.Writer) error {
+	fmt.Fprint(out, strings.Replace(msg.SecretQuestion, " ", "+", -1))
+	return nil
+}
+func (msg *SetSecretQuestion) Deserialize(in io.Reader) error { return nil }

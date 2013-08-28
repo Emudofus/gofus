@@ -31,6 +31,7 @@ type Client interface {
 	io.WriteCloser
 	protocol.Sender
 
+	Alive() bool
 	CloseWith(msg protocol.MessageContainer) (n int, err error)
 
 	Id() int
@@ -43,11 +44,16 @@ type Client interface {
 
 type netClient struct {
 	net.Conn
+	alive bool
 
 	id     int
 	ticket string
 	state  ClientState
 	user   *db.User
+}
+
+func (client *netClient) Alive() bool {
+	return client.alive
 }
 
 func (client *netClient) Id() int {
@@ -74,8 +80,13 @@ func (client *netClient) SetUser(user *db.User) {
 	client.user = user
 }
 
+func (client *netClient) Close() error {
+	client.alive = false
+	return client.Conn.Close()
+}
+
 func (client *netClient) Write(data []byte) (int, error) {
-	log.Printf("outcoming %d bytes to client #%d (%s)\n", len(data), client.id, data)
+	log.Printf("client #%04d (%03d bytes)>>>%s\n", client.id, len(data), data)
 	return client.Conn.Write(data)
 }
 
@@ -103,10 +114,11 @@ func (client *netClient) CloseWith(msg protocol.MessageContainer) (n int, err er
 
 func NewNetClient(conn net.Conn, id int, ticket string) Client {
 	return &netClient{
-		conn,
-		id,
-		ticket,
-		NoneState,
-		nil,
+		Conn:   conn,
+		alive:  true,
+		id:     id,
+		ticket: ticket,
+		state:  NoneState,
+		user:   nil,
 	}
 }

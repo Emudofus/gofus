@@ -132,7 +132,7 @@ func handle_conn(ctx *context, conn net.Conn) {
 
 	ctx.events <- event{client: client, login: true}
 
-	for ctx.running {
+	for ctx.running && client.Alive() {
 		n, err := conn.Read(chunk[0:])
 
 		if n <= 0 || err == io.EOF { // no more data to read or end-of-file
@@ -143,7 +143,7 @@ func handle_conn(ctx *context, conn net.Conn) {
 		}
 
 		received := chunk[:n]
-		for len(received) > 0 {
+		for len(received) > 0 && client.Alive() {
 			index := bytes.Index(received, []byte(messageDelimiter))
 			if index < 0 {
 				buffer = append(buffer, received...)
@@ -161,7 +161,8 @@ func handle_conn(ctx *context, conn net.Conn) {
 				copy(data, received)
 			}
 
-			ctx.tasks <- task{client, data}
+			//ctx.tasks <- task{client, data}
+			handle_client_data(ctx, client, string(data))
 
 			received = received[index+len(messageDelimiter):]
 		}
