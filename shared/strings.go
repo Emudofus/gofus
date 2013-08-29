@@ -12,50 +12,38 @@ func Split2(in, sep string) (string, string) {
 }
 
 func CryptDofusPassword(pass, ticket string) string {
-	var result []byte
+	result := make([]byte, len(pass)*2)
+	for i := 0; i < len(pass); i++ {
+		PPass, PKey := int(pass[i]), int(ticket[i])
+		APass, AKey := PPass>>4, PPass%16
 
-        for i := 0; i < len(pass); i++ {
-		PPass, PKey := pass[i], ticket[i]
-		APass, AKey := PPass >> 4, PKey % 16
-
-		ANB, ANB2 := (APass + PKey) % uint8(len(alphanum)), (AKey + PKey) % uint8(len(alphanum))
-
-		result = append(result, alphanum[ANB], alphanum[ANB2])
-        }
-
+		result[i*2] = alphanum[(APass+PKey)%len(alphanum)]
+		result[i*2+1] = alphanum[(AKey+PKey)%len(alphanum)]
+	}
 	return string(result)
 }
 
 func DecryptDofusPassword(pass, ticket string) string {
-	var PKey rune
-	var ANB int
-	var ANB2 int
-	var somme1 int
-	var somme2 int
-	var APass int
-	var AKey int
+	result := make([]byte, len(pass)/2)
+	for i := 0; i < len(pass); i += 2 {
+		PKey := int(ticket[i/2])
+		ANB := strings.IndexRune(alphanum, rune(pass[i]))
+		ANB2 := strings.IndexRune(alphanum, rune(pass[i+1]))
 
-	var decrypted []byte
+		somme1, somme2 := ANB+len(alphanum), ANB2+len(alphanum)
 
-        for i := 0; i < len(pass); i += 2 {
-		PKey = rune(ticket[i/2])
-		ANB = strings.IndexRune(alphanum, rune(pass[i]))
-		ANB2 = strings.IndexRune(alphanum, rune(pass[i+1]))
+		APass, AKey := somme1-PKey, somme2-PKey
 
-		somme1 = ANB + len(alphanum)
-		somme2 = ANB2 + len(alphanum)
-
-		APass = somme1 - int(PKey)
-		if APass < 0 { APass += 64 }
+		if APass < 0 {
+			APass += 64
+		}
 		APass <<= 4
 
-		AKey = somme2 - int(PKey)
-		if AKey < 0 { AKey += 64 }
+		if AKey < 0 {
+			AKey += 64
+		}
 
-		PPass := byte(APass + AKey)
-
-		decrypted = append(decrypted, PPass)
+		result[i/2] = byte(APass + AKey)
 	}
-
-	return string(decrypted)
+	return string(result)
 }

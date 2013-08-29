@@ -1,14 +1,13 @@
 package shared
 
 import (
-	"math/rand"
-	"time"
 	"testing"
 )
 
 func TestCryptDofusPassword(t *testing.T) {
-	password, ticket := "test", NextString(rand.NewSource(time.Now().UnixNano()), 32)
-	expected := "TODO"
+	password, ticket := "test", "azertyuiopqsdfghjklmwxcvbn012345"
+
+	expected := "OLa_SO52"
 
 	if test := CryptDofusPassword(password, ticket); test != expected {
 		t.Errorf("%s is not equal to %s", test, expected)
@@ -16,7 +15,7 @@ func TestCryptDofusPassword(t *testing.T) {
 }
 
 func TestDecryptDofusPassword(t *testing.T) {
-	password, ticket := "test", NextString(rand.NewSource(time.Now().UnixNano()), 32)
+	password, ticket := "test", "azertyuiopqsdfghjklmwxcvbn012345"
 
 	test := DecryptDofusPassword(CryptDofusPassword(password, ticket), ticket)
 
