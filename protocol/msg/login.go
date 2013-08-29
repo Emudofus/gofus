@@ -2,8 +2,10 @@ package msg
 
 import (
 	"fmt"
+	"github.com/Blackrush/gofus/protocol/types"
 	"io"
 	"strings"
+	"time"
 )
 
 type HelloConnect struct {
@@ -95,3 +97,48 @@ func (msg *SetSecretQuestion) Serialize(out io.Writer) error {
 	return nil
 }
 func (msg *SetSecretQuestion) Deserialize(in io.Reader) error { return nil }
+
+type SetRealmServers struct {
+	Servers []*types.RealmServer
+}
+
+func (msg *SetRealmServers) Opcode() string { return "AH" }
+func (msg *SetRealmServers) Serialize(out io.Writer) error {
+	// golang sucks
+	values := make([]interface{}, len(msg.Servers))
+	for i, server := range msg.Servers {
+		values[i] = server
+	}
+
+	fmt.Fprint(out, types.NewMultipleFormatter("|", values...))
+	return nil
+}
+func (msg *SetRealmServers) Deserialize(in io.Reader) error { return nil }
+
+type SetPlayersError struct{}
+
+func (msg *SetPlayersError) Opcode() string                 { return "AxE" }
+func (msg *SetPlayersError) Serialize(out io.Writer) error  { return nil }
+func (msg *SetPlayersError) Deserialize(in io.Writer) error { return nil }
+
+type SetRealmServerPlayers struct {
+	SubscriptionEnd time.Time
+	Players         []*types.RealmServerPlayers
+}
+
+func (msg *SetRealmServerPlayers) Opcode() string { return "AxK" }
+func (msg *SetRealmServerPlayers) Serialize(out io.Writer) error {
+	values := make([]interface{}, len(msg.Players))
+	for i, players := range msg.Players {
+		values[i] = players
+	}
+
+	sub := uint64(msg.SubscriptionEnd.Sub(time.Now()).Nanoseconds()) / 1e6
+
+	fmt.Fprint(out, sub, "|", types.NewMultipleFormatter("|", values...))
+
+	return nil
+}
+func (msg *SetRealmServerPlayers) Deserialize(in io.Reader) error {
+	return nil
+}

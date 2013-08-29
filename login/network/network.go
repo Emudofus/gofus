@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/shared"
 	"io"
 	"log"
@@ -13,12 +14,13 @@ import (
 )
 
 const (
-	bufferLen        = 64
-	tasksQueueLen    = 100
-	eventsQueueLen   = 100
-	clientTicketLen  = 32
-	messageDelimiter = "\n\u0000"
-	clientVersion    = "1.29.1"
+	bufferLen           = 64
+	tasksQueueLen       = 100
+	eventsQueueLen      = 100
+	clientTicketLen     = 32
+	inMessageDelimiter  = "\n\u0000"
+	outMessageDelimiter = "\u0000"
+	clientVersion       = "1.29.1"
 )
 
 type context struct {
@@ -30,6 +32,7 @@ type context struct {
 	clients          map[int]Client
 
 	db     *sql.DB
+	users  db.Users
 	config Configuration
 }
 
@@ -38,14 +41,15 @@ type Configuration struct {
 	NbWorkers int
 }
 
-func New(db *sql.DB, config Configuration) shared.StartStopper {
+func New(database *sql.DB, config Configuration) shared.StartStopper {
 	return &context{
 		tasks:            make(chan task, tasksQueueLen),
 		events:           make(chan event, eventsQueueLen),
 		nextClientId:     make(chan int),
 		nextClientTicket: make(chan string),
 		clients:          make(map[int]Client),
-		db:               db,
+		db:               database,
+		users:            db.Users{database},
 		config:           config,
 	}
 }
@@ -144,7 +148,7 @@ func handle_conn(ctx *context, conn net.Conn) {
 
 		received := chunk[:n]
 		for len(received) > 0 && client.Alive() {
-			index := bytes.Index(received, []byte(messageDelimiter))
+			index := bytes.Index(received, []byte(inMessageDelimiter))
 			if index < 0 {
 				buffer = append(buffer, received...)
 				log.Print("buffered ", len(received), " bytes (client #", client.Id(), ")")
@@ -164,7 +168,7 @@ func handle_conn(ctx *context, conn net.Conn) {
 			//ctx.tasks <- task{client, data}
 			handle_client_data(ctx, client, string(data))
 
-			received = received[index+len(messageDelimiter):]
+			received = received[index+len(inMessageDelimiter):]
 		}
 	}
 }

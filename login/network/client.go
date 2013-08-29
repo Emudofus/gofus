@@ -86,7 +86,7 @@ func (client *netClient) Close() error {
 }
 
 func (client *netClient) Write(data []byte) (int, error) {
-	log.Printf("client #%04d (%03d bytes)>>>%s\n", client.id, len(data), data)
+	log.Printf("client #%04d [%03d bytes]>>>%s\n", client.id, len(data), data)
 	return client.Conn.Write(data)
 }
 
@@ -96,7 +96,7 @@ func (client *netClient) Send(msg protocol.MessageContainer) (int, error) {
 	if err := msg.Serialize(buf); err != nil {
 		return 0, err
 	}
-	buf.WriteString(messageDelimiter)
+	buf.WriteString(outMessageDelimiter)
 
 	n, err := buf.WriteTo(client)
 	return int(n), err
