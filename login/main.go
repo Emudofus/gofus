@@ -36,6 +36,7 @@ func main() {
 		Driver:         "postgres",
 		DataSourceName: "user=postgres dbname=gofus password=bla sslmode=disable",
 	})
+	defer database.Close()
 
 	networkService := network.New(database, network.Configuration{
 		Port:      uint16(*port),
@@ -43,8 +44,7 @@ func main() {
 	})
 
 	go networkService.Start()
+	defer networkService.Stop()
 
 	<-wait_user_input()
-
-	networkService.Stop()
 }
