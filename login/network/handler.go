@@ -21,9 +21,10 @@ func handle_client_disconnection(ctx *context, client Client) {
 	log.Printf("client #%04d [disconnected]", client.Id())
 }
 
-func authenticate(ctx *context, client Client, user *db.User, data string) bool {
-	pass := shared.DecryptDofusPassword(data, client.Ticket())
-	if pass != user.Password {
+func authenticate(ctx *context, client Client, user *db.User, pass string) bool {
+	clear := shared.DecryptDofusPassword(pass[2:], client.Ticket())
+	println(clear)
+	if clear != user.Password {
 		client.CloseWith(&msg.LoginError{})
 		return false
 	} else if !user.Rights.Has(db.NoneRight) {
@@ -49,7 +50,7 @@ func handle_client_data(ctx *context, client Client, data string) {
 			client.Close()
 		}
 	case LoginState:
-		username, _ := shared.Split2(data, "\n")
+		username, pass := shared.Split2(data, "\n")
 		log.Print("user '", username, "' wants to login")
 
 		user, err := users.FindByName(username)
@@ -58,7 +59,7 @@ func handle_client_data(ctx *context, client Client, data string) {
 		} else if err != nil {
 			log.Print("can't log '", username, "' because: ", err)
 			client.Close()
-		} else if authenticate(ctx, client, user, data) {
+		} else if authenticate(ctx, client, user, pass) {
 			client.Send(&msg.SetNickname{user.Nickname})
 			client.Send(&msg.SetCommunity{0})
 			client.Send(&msg.LoginSuccess{false})
