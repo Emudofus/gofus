@@ -139,6 +139,37 @@ func (msg *SetRealmServerPlayers) Serialize(out io.Writer) error {
 
 	return nil
 }
-func (msg *SetRealmServerPlayers) Deserialize(in io.Reader) error {
+func (msg *SetRealmServerPlayers) Deserialize(in io.Reader) error { return nil }
+
+type RealmServerSelectionRequest struct {
+	ServerId int
+}
+
+func (msg *RealmServerSelectionRequest) Opcode() string { return "AX" }
+func (msg *RealmServerSelectionRequest) Serialize(out io.Writer) error {
+	fmt.Fprint(out, msg.ServerId)
 	return nil
 }
+func (msg *RealmServerSelectionRequest) Deserialize(in io.Reader) error {
+	fmt.Fscanf(in, "AX%d", &msg.ServerId)
+	return nil
+}
+
+type RealmServerSelectionResponse struct {
+	Address string
+	Port uint16
+	Ticket string
+}
+
+func (msg *RealmServerSelectionResponse) Opcode() string { return "AYK" }
+func (msg *RealmServerSelectionResponse) Serialize(out io.Writer) error {
+	fmt.Fprintf(out, "%s:%d;%s", msg.Address, msg.Port, msg.Ticket)
+	return nil
+}
+func (msg *RealmServerSelectionResponse) Deserialize(in io.Reader) error { return nil }
+
+type RealmServerSelectionError struct{}
+
+func (msg *RealmServerSelectionError) Opcode() string { return "AXE" }
+func (msg *RealmServerSelectionError) Serialize(out io.Writer) error { return nil }
+func (msg *RealmServerSelectionError) Deserialize(in io.Reader) error { return nil }

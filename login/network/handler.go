@@ -2,6 +2,7 @@ package network
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/protocol/msg"
 	"github.com/Blackrush/gofus/protocol/types"
@@ -43,6 +44,9 @@ func handle_client_data(ctx *context, client Client, data string) {
 		case "Ax":
 			handle_client_player_list(ctx, client)
 		case "AX":
+			var serverId int
+			fmt.Sscanf(data, "AX%d", &serverId)
+			handle_client_realm_selection(ctx, client, serverId)
 		}
 	default:
 		// No need to panic, it's only one client who got lost; just log and kick him out
@@ -103,5 +107,13 @@ func handle_client_player_list(ctx *context, client Client) {
 				Players: 1,
 			},
 		},
+	})
+}
+
+func handle_client_realm_selection(ctx *context, client Client, serverId int) {
+	client.CloseWith(&msg.RealmServerSelectionResponse{
+		Address: "127.0.0.1",
+		Port:    5556,
+		Ticket:  client.Ticket(),
 	})
 }
