@@ -1,12 +1,10 @@
 package network
 
 import (
-	"bytes"
 	"database/sql"
 	"fmt"
 	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/shared"
-	"io"
 	"log"
 	"math/rand"
 	"net"
@@ -128,48 +126,15 @@ func stop_server(ctx *context) {
 }
 
 func handle_conn(ctx *context, conn net.Conn) {
-	var client Client = NewNetClient(conn, <-ctx.nextClientId, <-ctx.nextClientTicket)
-	var chunk [bufferLen]byte
-	var buffer []byte
-
+	client := NewNetClient(conn, <-ctx.nextClientId, <-ctx.nextClientTicket)
 	defer close_conn(ctx, client)
 
 	ctx.events <- event{client: client, login: true}
 
+	buffer := shared.Bufferize(conn, []byte(inMessageDelimiter), bufferLen)
 	for ctx.running && client.Alive() {
-		n, err := conn.Read(chunk[0:])
-
-		if n <= 0 || err == io.EOF { // no more data to read or end-of-file
-			break
-		}
-		if err != nil {
-			panic(fmt.Sprintf("can't read data from %s because: %s", conn.RemoteAddr(), err.Error()))
-		}
-
-		received := chunk[:n]
-		for len(received) > 0 && client.Alive() {
-			index := bytes.Index(received, []byte(inMessageDelimiter))
-			if index < 0 {
-				buffer = append(buffer, received...)
-				log.Print("buffered ", len(received), " bytes (client #", client.Id(), ")")
-				break
-			}
-
-			var data []byte
-			if len(buffer) > 0 {
-				data = make([]byte, index+len(buffer))
-				copy(data, buffer)
-				copy(data[len(buffer):], received)
-			} else {
-				data = make([]byte, index)
-				copy(data, received)
-			}
-
-			//ctx.tasks <- task{client, data}
-			handle_client_data(ctx, client, string(data))
-
-			received = received[index+len(inMessageDelimiter):]
-		}
+		data := <-buffer
+		handle_client_data(ctx, client, string(data))
 	}
 }
 
