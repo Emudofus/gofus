@@ -16,6 +16,6 @@ func Open(config *Configuration) (db *sql.DB) {
 		panic(err.Error())
 	}
 
-	log.Print("connection to database successfully opened")
+	log.Print("[database] successfully opened")
 	return
 }

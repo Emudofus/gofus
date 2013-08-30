@@ -13,7 +13,7 @@ import (
 
 func handle_client_connection(ctx *context, client Client) {
 	ctx.clients[client.Id()] = client
-	log.Printf("client #%04d [connected]", client.Id())
+	log.Printf("[network-client-%04d] connected", client.Id())
 
 	client.Send(&msg.HelloConnect{Ticket: client.Ticket()})
 	client.SetState(VersionState)
@@ -21,11 +21,11 @@ func handle_client_connection(ctx *context, client Client) {
 
 func handle_client_disconnection(ctx *context, client Client) {
 	delete(ctx.clients, client.Id())
-	log.Printf("client #%04d [disconnected]", client.Id())
+	log.Printf("[network-client-%04d] disconnected", client.Id())
 }
 
 func handle_client_data(ctx *context, client Client, data string) {
-	log.Printf("client #%04d [%03d bytes]<<<%s", client.Id(), len(data), data)
+	log.Printf("[network-client-%04d] RCV(%03d) %s", client.Id(), len(data), data)
 
 	switch client.State() {
 	case VersionState:
@@ -50,7 +50,7 @@ func handle_client_data(ctx *context, client Client, data string) {
 		}
 	default:
 		// No need to panic, it's only one client who got lost; just log and kick him out
-		log.Printf("client #%04d [unknown state]", client.Id())
+		log.Printf("[network-client-%04d] unknown state", client.Id())
 		client.Close()
 	}
 }

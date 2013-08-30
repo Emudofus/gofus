@@ -1,18 +1,24 @@
 package network
 
+import (
+	"log"
+)
+
 // TODO: Interface
 type task struct {
 	client Client
-	data []byte
+	data   []byte
 }
 
 // TODO: Interface
 type event struct {
 	client Client
-	login bool
+	login  bool
 }
 
 func worker(ctx *context) {
+	log.Print("[network-worker] spawned")
+
 	for ctx.running {
 		select {
 		case task := <-ctx.tasks:

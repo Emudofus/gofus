@@ -61,12 +61,11 @@ func (ctx *context) Start() {
 	go client_id_generator(ctx)
 	go client_ticket_generator(ctx)
 	for i := 0; i < ctx.config.NbWorkers; i++ {
-		log.Print("network service worker #", (i + 1), " started")
 		go worker(ctx)
 	}
 	go start_server(ctx)
 
-	log.Print("network service successfully started for Dofus ", clientVersion)
+	log.Print("[network] successfully started for Dofus ", clientVersion)
 }
 
 func (ctx *context) Stop() {
@@ -108,7 +107,7 @@ func start_server(ctx *context) {
 	defer listener.Close()
 	defer stop_server(ctx)
 
-	log.Print("network service listening on ", ctx.config.Port)
+	log.Print("[network] listening on ", ctx.config.Port)
 
 	for ctx.running {
 		conn, err := listener.Accept()

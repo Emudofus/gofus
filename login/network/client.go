@@ -86,7 +86,7 @@ func (client *netClient) Close() error {
 }
 
 func (client *netClient) Write(data []byte) (int, error) {
-	log.Printf("client #%04d [%03d bytes]>>>%s\n", client.id, len(data), data)
+	log.Printf("[network-client-%04d] SND(%03d) %s", client.id, len(data), data)
 	return client.Conn.Write(data)
 }
 
