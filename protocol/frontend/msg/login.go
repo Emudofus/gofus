@@ -2,7 +2,7 @@ package msg
 
 import (
 	"fmt"
-	"github.com/Blackrush/gofus/protocol/types"
+	"github.com/Blackrush/gofus/protocol/frontend/types"
 	"io"
 	"strings"
 	"time"
@@ -157,8 +157,8 @@ func (msg *RealmServerSelectionRequest) Deserialize(in io.Reader) error {
 
 type RealmServerSelectionResponse struct {
 	Address string
-	Port uint16
-	Ticket string
+	Port    uint16
+	Ticket  string
 }
 
 func (msg *RealmServerSelectionResponse) Opcode() string { return "AYK" }
@@ -170,6 +170,6 @@ func (msg *RealmServerSelectionResponse) Deserialize(in io.Reader) error { retur
 
 type RealmServerSelectionError struct{}
 
-func (msg *RealmServerSelectionError) Opcode() string { return "AXE" }
-func (msg *RealmServerSelectionError) Serialize(out io.Writer) error { return nil }
+func (msg *RealmServerSelectionError) Opcode() string                 { return "AXE" }
+func (msg *RealmServerSelectionError) Serialize(out io.Writer) error  { return nil }
 func (msg *RealmServerSelectionError) Deserialize(in io.Reader) error { return nil }
