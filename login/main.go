@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Blackrush/gofus/login/db"
 	lnetwork "github.com/Blackrush/gofus/login/network/login"
 	rnetwork "github.com/Blackrush/gofus/login/network/realm"
+	"github.com/Blackrush/gofus/shared/db"
 	_ "github.com/lib/pq"
 	"os"
 	"os/signal"

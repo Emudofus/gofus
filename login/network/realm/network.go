@@ -22,11 +22,13 @@ type context struct {
 
 	running      bool
 	nextClientId chan uint64
+	realms       map[int]Realm
 }
 
 func New(config Configuration) shared.StartStopper {
 	return &context{
 		config: config,
+		realms: make(map[int]Realm),
 	}
 }
 
