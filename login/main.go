@@ -4,14 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Blackrush/gofus/login/db"
-	netlogin "github.com/Blackrush/gofus/login/network/login"
+	lnetwork "github.com/Blackrush/gofus/login/network/login"
+	rnetwork "github.com/Blackrush/gofus/login/network/realm"
 	_ "github.com/lib/pq"
 	"os"
 	"os/signal"
 )
 
 var (
-	port      = flag.Int("port", 5555, "the port the server will listen on")
+	lport     = flag.Int("lport", 5555, "the port the login server will listen on")
+	rport     = flag.Int("rport", 5554, "the port the realm server will listen on")
 	nbWorkers = flag.Int("nbWorkers", 1, "the number of workers to start")
 )
 
@@ -38,13 +40,20 @@ func main() {
 	})
 	defer database.Close()
 
-	networkService := netlogin.New(database, netlogin.Configuration{
-		Port:      uint16(*port),
+	rnet := rnetwork.New(rnetwork.Configuration{
+		Port: uint16(*rport),
+	})
+
+	go rnet.Start()
+	defer rnet.Stop()
+
+	lnet := lnetwork.New(database, lnetwork.Configuration{
+		Port:      uint16(*lport),
 		NbWorkers: *nbWorkers,
 	})
 
-	go networkService.Start()
-	defer networkService.Stop()
+	go lnet.Start()
+	defer lnet.Stop()
 
 	<-wait_user_input()
 }
