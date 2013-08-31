@@ -1,4 +1,4 @@
-package network
+package login
 
 import (
 	"database/sql"
@@ -34,6 +34,16 @@ type context struct {
 	config Configuration
 }
 
+type task struct {
+	client Client
+	data   []byte
+}
+
+type event struct {
+	client Client
+	login  bool
+}
+
 type Configuration struct {
 	Port      uint16
 	NbWorkers int
@@ -61,11 +71,11 @@ func (ctx *context) Start() {
 	go client_id_generator(ctx)
 	go client_ticket_generator(ctx)
 	for i := 0; i < ctx.config.NbWorkers; i++ {
-		go worker(ctx)
+		go spawn_worker(ctx)
 	}
 	go start_server(ctx)
 
-	log.Print("[network] successfully started for Dofus ", clientVersion)
+	log.Print("[login-net] successfully started for Dofus ", clientVersion)
 }
 
 func (ctx *context) Stop() {
@@ -107,7 +117,7 @@ func start_server(ctx *context) {
 	defer listener.Close()
 	defer stop_server(ctx)
 
-	log.Print("[network] listening on ", ctx.config.Port)
+	log.Print("[login-net] listening on ", ctx.config.Port)
 
 	for ctx.running {
 		conn, err := listener.Accept()
@@ -140,4 +150,21 @@ func handle_conn(ctx *context, conn net.Conn) {
 func close_conn(ctx *context, client Client) {
 	client.Close()
 	ctx.events <- event{client: client, login: false}
+}
+
+func spawn_worker(ctx *context) {
+	log.Print("[login-net-worker] spawned")
+
+	for ctx.running {
+		select {
+		case task := <-ctx.tasks:
+			handle_client_data(ctx, task.client, string(task.data))
+		case event := <-ctx.events:
+			if event.login {
+				handle_client_connection(ctx, event.client)
+			} else {
+				handle_client_disconnection(ctx, event.client)
+			}
+		}
+	}
 }

@@ -1,4 +1,4 @@
-package network
+package login
 
 import (
 	"bytes"
@@ -86,7 +86,7 @@ func (client *netClient) Close() error {
 }
 
 func (client *netClient) Write(data []byte) (int, error) {
-	log.Printf("[network-client-%04d] SND(%03d) %s", client.id, len(data), data)
+	log.Printf("[login-net-client-%04d] SND(%03d) %s", client.id, len(data), data)
 	return client.Conn.Write(data)
 }
 

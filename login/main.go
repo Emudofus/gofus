@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Blackrush/gofus/login/db"
-	"github.com/Blackrush/gofus/login/network"
+	netlogin "github.com/Blackrush/gofus/login/network/login"
 	_ "github.com/lib/pq"
 	"os"
 	"os/signal"
@@ -38,7 +38,7 @@ func main() {
 	})
 	defer database.Close()
 
-	networkService := network.New(database, network.Configuration{
+	networkService := netlogin.New(database, netlogin.Configuration{
 		Port:      uint16(*port),
 		NbWorkers: *nbWorkers,
 	})
