@@ -28,6 +28,13 @@ type Configuration struct {
 	Password string
 }
 
+type Service interface {
+	shared.StartStopper
+
+	GetRealm(id int) (*Realm, bool)
+	GetRealms() []*Realm
+}
+
 type context struct {
 	config Configuration
 
@@ -40,7 +47,7 @@ type context struct {
 	realms map[int]*Realm
 }
 
-func New(database *sql.DB, config Configuration) shared.StartStopper {
+func New(database *sql.DB, config Configuration) Service {
 	return &context{
 		config: config,
 		db:     database,
@@ -63,6 +70,22 @@ func (ctx *context) Start() {
 
 func (ctx *context) Stop() {
 	ctx.running = false
+}
+
+func (ctx *context) GetRealm(id int) (*Realm, bool) {
+	realm, ok := ctx.realms[id]
+	return realm, ok
+}
+
+// TODO perform some caching
+func (ctx *context) GetRealms() []*Realm {
+	realms := make([]*Realm, len(ctx.realms))
+	i := 0
+	for _, realm := range ctx.realms {
+		realms[i] = realm
+		i++
+	}
+	return realms
 }
 
 func shexdigest(digest hash.Hash, input string) []byte {

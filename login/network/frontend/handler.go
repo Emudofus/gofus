@@ -72,6 +72,16 @@ func client_authenticate(ctx *context, client Client, username, password string)
 	return user, true
 }
 
+// TODO perform some caching
+func get_realm_servers(ctx *context) []*types.RealmServer {
+	left := ctx.backend.GetRealms()
+	right := make([]*types.RealmServer, len(left))
+	for i, realm := range left {
+		right[i] = &realm.RealmServer
+	}
+	return right
+}
+
 func client_handle_login_state(ctx *context, client Client, data []byte) {
 	username, password := shared.Splits2(data, []byte("\n#1"))
 
@@ -79,14 +89,7 @@ func client_handle_login_state(ctx *context, client Client, data []byte) {
 		client.Send(&msg.SetCommunity{user.CommunityId})
 		client.Send(&msg.SetNickname{user.Nickname})
 		client.Send(&msg.SetSecretQuestion{user.SecretQuestion})
-		client.Send(&msg.SetRealmServers{[]*types.RealmServer{
-			&types.RealmServer{
-				Id:         1,
-				State:      types.RealmOnlineState,
-				Completion: 0,
-				Joinable:   true,
-			},
-		}})
+		client.Send(&msg.SetRealmServers{get_realm_servers(ctx)})
 		client.Send(&msg.LoginSuccess{IsAdmin: false})
 
 		client.SetUser(user)

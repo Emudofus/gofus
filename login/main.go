@@ -52,7 +52,7 @@ func main() {
 	go bnet.Start()
 	defer bnet.Stop()
 
-	fnet := fnetwork.New(database, fnetwork.Configuration{
+	fnet := fnetwork.New(database, bnet, fnetwork.Configuration{
 		Port:    uint16(*fport),
 		Workers: *workers,
 	})

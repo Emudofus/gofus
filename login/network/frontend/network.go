@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Blackrush/gofus/login/db"
+	"github.com/Blackrush/gofus/login/network/backend"
 	"github.com/Blackrush/gofus/shared"
 	"log"
 	"math/rand"
@@ -26,9 +27,10 @@ type Configuration struct {
 }
 
 type context struct {
-	config Configuration
-	db     *sql.DB
-	users  *db.Users
+	config  Configuration
+	db      *sql.DB
+	users   *db.Users
+	backend backend.Service
 
 	running          bool
 	nextClientId     <-chan uint64
@@ -38,13 +40,14 @@ type context struct {
 	events chan event
 }
 
-func New(database *sql.DB, config Configuration) shared.StartStopper {
+func New(database *sql.DB, backend backend.Service, config Configuration) shared.StartStopper {
 	return &context{
-		config: config,
-		db:     database,
-		users:  &db.Users{database},
-		tasks:  make(chan task, queue_len),
-		events: make(chan event, queue_len),
+		config:  config,
+		db:      database,
+		users:   &db.Users{database},
+		backend: backend,
+		tasks:   make(chan task, queue_len),
+		events:  make(chan event, queue_len),
 	}
 }
 
