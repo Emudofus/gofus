@@ -16,6 +16,7 @@ func init() {
 	producers[4] = func() Message { return new(SetInfosMsg) }
 	producers[5] = func() Message { return new(SetStateMsg) }
 	producers[6] = func() Message { return new(ClientConnMsg) }
+	producers[7] = func() Message { return new(ClientConnReadyMsg) }
 }
 
 func NewMsg(opcode uint16) (Message, bool) {
@@ -151,5 +152,19 @@ func (msg ClientConnMsg) Serialize(out io.Writer) error {
 func (msg ClientConnMsg) Deserialize(in io.Reader) error {
 	Read(in, &msg.Ticket)
 	Read(in, &msg.User)
+	return nil
+}
+
+type ClientConnReadyMsg struct {
+	Ticket string
+}
+
+func (msg ClientConnReadyMsg) Opcode() uint16 { return 7 }
+func (msg ClientConnReadyMsg) Serialize(out io.Writer) error {
+	Put(out, msg.Ticket)
+	return nil
+}
+func (msg ClientConnReadyMsg) Deserialize(in io.Reader) error {
+	Read(in, &msg.Ticket)
 	return nil
 }

@@ -153,7 +153,7 @@ func server_conn_rcv(ctx *context, conn net.Conn) {
 
 	log.Printf("[backend-net-client-%04d] CONN", client.id)
 
-	client.Send(&backend.HelloConnectMsg{client.salt})
+	client_connection(ctx, client)
 
 	for ctx.running && client.alive {
 		if msg, ok := conn_rcv(conn); ok {
@@ -168,6 +168,8 @@ func server_conn_rcv(ctx *context, conn net.Conn) {
 
 func server_conn_close(ctx *context, client *Client) {
 	client.Close()
+
+	client_disconnection(ctx, client)
 
 	log.Printf("[backend-net-client-%04d] DCONN", client.id)
 }
