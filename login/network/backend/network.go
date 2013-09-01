@@ -1,10 +1,12 @@
 package backend
 
 import (
+	digest "crypto/sha512"
 	"database/sql"
 	"fmt"
 	"github.com/Blackrush/gofus/protocol/backend"
 	"github.com/Blackrush/gofus/shared"
+	"hash"
 	"io"
 	"log"
 	"math/rand"
@@ -22,7 +24,8 @@ var (
 )
 
 type Configuration struct {
-	Port uint16
+	Port     uint16
+	Password string
 }
 
 type context struct {
@@ -33,12 +36,15 @@ type context struct {
 	running        bool
 	nextClientId   <-chan uint64
 	nextClientSalt <-chan string
+
+	realms map[int]*Realm
 }
 
 func New(database *sql.DB, config Configuration) shared.StartStopper {
 	return &context{
 		config: config,
 		db:     database,
+		realms: make(map[int]*Realm),
 	}
 }
 
@@ -57,6 +63,15 @@ func (ctx *context) Start() {
 
 func (ctx *context) Stop() {
 	ctx.running = false
+}
+
+func shexdigest(digest hash.Hash, input string) []byte {
+	return digest.Sum([]byte(input))
+}
+
+func (ctx *context) get_password_hash(salt string) []byte {
+	d := digest.New()
+	return shexdigest(d, fmt.Sprintf("%x%s", shexdigest(d, ctx.config.Password), salt))
 }
 
 func client_id_generator(ctx *context) {
@@ -162,6 +177,7 @@ type Client struct {
 	id    uint64
 	salt  string
 	alive bool
+	realm *Realm
 }
 
 func (client *Client) Close() error {
@@ -186,4 +202,8 @@ func (client *Client) Salt() string {
 
 func (client *Client) Alive() bool {
 	return client.alive
+}
+
+func (client *Client) Realm() *Realm {
+	return client.realm
 }
