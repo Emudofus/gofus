@@ -8,7 +8,6 @@ import (
 	"github.com/Blackrush/gofus/protocol/frontend/types"
 	"github.com/Blackrush/gofus/shared"
 	"log"
-	"time"
 )
 
 func client_connection(ctx *context, client Client) {
@@ -76,7 +75,7 @@ func client_handle_login_state(ctx *context, client Client, data []byte) {
 	username, password := shared.Splits2(data, []byte("\n#1"))
 
 	if user, ok := client_authenticate(ctx, client, username, password); ok {
-		client.Send(&msg.SetCommunity{CommunityId: 0})
+		client.Send(&msg.SetCommunity{user.CommunityId})
 		client.Send(&msg.SetNickname{user.Nickname})
 		client.Send(&msg.SetSecretQuestion{user.SecretQuestion})
 		client.Send(&msg.SetRealmServers{[]*types.RealmServer{
@@ -97,15 +96,12 @@ func client_handle_login_state(ctx *context, client Client, data []byte) {
 }
 
 func client_handle_players_list(ctx *context, client Client, data []byte) {
-	client.Send(&msg.SetRealmServerPlayers{
-		SubscriptionEnd: time.Now().AddDate(1, 0, 1), // 1 year 0 months 1 day
-		Players: []*types.RealmServerPlayers{
-			&types.RealmServerPlayers{
-				Id:      1,
-				Players: 1,
-			},
+	client.Send(&msg.SetRealmServerPlayers{client.User().SubscriptionEnd, []*types.RealmServerPlayers{
+		&types.RealmServerPlayers{
+			Id:      1,
+			Players: 1,
 		},
-	})
+	}})
 }
 
 func client_handle_queue_status(ctx *context, client Client, data []byte) {

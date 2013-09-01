@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type UserRight uint64
@@ -27,17 +28,19 @@ const (
 const AllRight = NoneRight | LoginRight
 
 type User struct {
-	Id             uint
-	Name           string
-	Password       string
-	Nickname       string
-	SecretQuestion string
-	SecretAnswer   string
-	Rights         UserRight
+	Id              uint
+	Name            string
+	Password        string
+	Nickname        string
+	SecretQuestion  string
+	SecretAnswer    string
+	Rights          UserRight
+	CommunityId     int
+	SubscriptionEnd time.Time
 }
 
 func (user *User) String() string {
-	return fmt.Sprintf("User{ Id: %d, Name: %s, Nickname: %s, Rights: %d }", user.Id, user.Name, user.Nickname, user.Rights)
+	return fmt.Sprintf("User{ Id: %d, Name: %s, Nickname: %s, Rights: %d, CommunityId: %d, SubscriptionEnd: %s }", user.Id, user.Name, user.Nickname, user.Rights, user.CommunityId, user.SubscriptionEnd)
 }
 
 func (user *User) ValidPassword(password string) bool {
@@ -47,7 +50,7 @@ func (user *User) ValidPassword(password string) bool {
 type Users struct{ *sql.DB }
 
 func scan_user(rows *sql.Rows, user *User) error {
-	return rows.Scan(&user.Id, &user.Name, &user.Password, &user.Nickname, &user.SecretQuestion, &user.SecretAnswer, &user.Rights)
+	return rows.Scan(&user.Id, &user.Name, &user.Password, &user.Nickname, &user.SecretQuestion, &user.SecretAnswer, &user.Rights, &user.CommunityId, &user.SubscriptionEnd)
 }
 
 func (db *Users) find(query string, args ...interface{}) (user *User, err error) {
@@ -101,7 +104,7 @@ func user_values(user *User, with_id, id_last bool) (values []interface{}) {
 	if with_id && !id_last {
 		values = append(values, user.Id)
 	}
-	values = append(values, user.Name, user.Password, user.Nickname, user.SecretQuestion, user.SecretAnswer, user.Rights)
+	values = append(values, user.Name, user.Password, user.Nickname, user.SecretQuestion, user.SecretAnswer, user.Rights, user.CommunityId, user.SubscriptionEnd)
 	if with_id && id_last {
 		values = append(values, user.Id)
 	}
@@ -109,19 +112,19 @@ func user_values(user *User, with_id, id_last bool) (values []interface{}) {
 }
 
 func (db *Users) FindById(id int) (*User, error) {
-	return db.find("select id, name, password, nickname, secret_question, secret_answer, rights from users where id=$1", id)
+	return db.find("select id, name, password, nickname, secret_question, secret_answer, rights, community_id, subscription_end from users where id=$1", id)
 }
 
 func (db *Users) FindByName(name string) (*User, error) {
-	return db.find("select id, name, password, nickname, secret_question, secret_answer, rights from users where name=$1", name)
+	return db.find("select id, name, password, nickname, secret_question, secret_answer, rights, community_id, subscription_end from users where name=$1", name)
 }
 
 func (db *Users) FindAll() ([]*User, error) {
-	return db.find_many("select id, name, password, nickname, secret_question, secret_answer, rights from users")
+	return db.find_many("select id, name, password, nickname, secret_question, secret_answer, rights, community_id, subscription_end from users")
 }
 
 func (db *Users) Insert(user *User) error {
-	stmt, err := db.Prepare("insert into users(name, password, nickname, secret_question, secret_answer, rights) values($1, $2, $3, $4, $5, $6)")
+	stmt, err := db.Prepare("insert into users(name, password, nickname, secret_question, secret_answer, rights, community_id, subscription_end) values($1, $2, $3, $4, $5, $6, $7, $8)")
 	if err != nil {
 		return err
 	}
@@ -141,7 +144,7 @@ func (db *Users) Insert(user *User) error {
 }
 
 func (db *Users) Update(user *User) error {
-	stmt, err := db.Prepare("update users set name=$1, password=$2, nickname=$3, secret_question=$4, secret_answer=$5, rights=$6 where id=$7")
+	stmt, err := db.Prepare("update users set name=$1, password=$2, nickname=$3, secret_question=$4, secret_answer=$5, rights=$6, community_id=$7, subscription_end=$8 where id=$9")
 	if err != nil {
 		return err
 	}
