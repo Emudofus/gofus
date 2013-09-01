@@ -100,12 +100,20 @@ func client_handle_login_state(ctx *context, client Client, data []byte) {
 }
 
 func client_handle_players_list(ctx *context, client Client, data []byte) {
-	client.Send(&msg.SetRealmServerPlayers{client.User().SubscriptionEnd, []*types.RealmServerPlayers{
-		&types.RealmServerPlayers{
-			Id:      1,
-			Players: 1,
-		},
-	}})
+	realms := ctx.backend.GetRealms()
+	players := make([]*types.RealmServerPlayers, len(realms))
+	callback := make(chan types.RealmServerPlayers, len(realms))
+
+	for _, realm := range realms {
+		realm.AskPlayers(client.User().Id, callback)
+	}
+
+	for i := 0; i < len(realms); i++ {
+		p := <-callback
+		players = append(players, &p)
+	}
+
+	client.Send(&msg.SetRealmServerPlayers{client.User().SubscriptionEnd, players})
 }
 
 func client_handle_queue_status(ctx *context, client Client, data []byte) {
@@ -116,9 +124,18 @@ func client_handle_realm_selection(ctx *context, client Client, data []byte) {
 	m := msg.RealmServerSelectionRequest{}
 	m.Deserialize(bytes.NewReader(data))
 
-	client.CloseWith(&msg.RealmServerSelectionResponse{
-		Address: "127.0.0.1",
-		Port:    5556,
-		Ticket:  client.Ticket(),
-	})
+	if realm, ok := ctx.backend.GetRealm(m.ServerId); ok {
+		callback := realm.NotifyUserConnection(client.Ticket(), client.User())
+
+		go func() { // maybe it should be blocking ?
+			<-callback
+			client.CloseWith(&msg.RealmServerSelectionResponse{
+				Address: realm.Address,
+				Port:    realm.Port,
+				Ticket:  client.Ticket(),
+			})
+		}()
+	} else {
+		client.Send(&msg.RealmServerSelectionError{})
+	}
 }

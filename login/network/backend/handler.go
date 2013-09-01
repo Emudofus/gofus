@@ -55,7 +55,7 @@ func (realm *Realm) NotifyUserConnection(ticket string, user *db.User) (callback
 	return
 }
 
-func (realm *Realm) AskPlayers(userId uint) (callback chan frontend.RealmServerPlayers) {
+func (realm *Realm) AskPlayers(userId uint, callback chan frontend.RealmServerPlayers) {
 	realm.AssertJoinable()
 
 	if _, exists := realm.players_callbacks[userId]; exists {
@@ -63,10 +63,7 @@ func (realm *Realm) AskPlayers(userId uint) (callback chan frontend.RealmServerP
 	}
 
 	realm.client.Send(&backend.UserPlayersReqMsg{uint64(userId)})
-
-	callback = make(chan frontend.RealmServerPlayers, 1)
 	realm.players_callbacks[userId] = callback
-	return
 }
 
 func client_connection(ctx *context, client *Client) {
