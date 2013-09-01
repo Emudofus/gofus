@@ -14,14 +14,14 @@ type Realm struct {
 	Address string
 	Port    uint16
 
-	client    *Client
-	callbacks map[string]chan bool // ticket -> callback
+	client         *Client
+	conn_callbacks map[string]chan bool // ticket -> callback
 }
 
 func NewRealm(client *Client) *Realm {
 	realm := new(Realm)
 	realm.client = client
-	realm.callbacks = make(map[string]chan bool)
+	realm.conn_callbacks = make(map[string]chan bool)
 	return realm
 }
 
@@ -42,7 +42,7 @@ func (realm *Realm) NotifyUserConnection(ticket string, user *db.User) (callback
 	})
 
 	callback = make(chan bool, 1)
-	realm.callbacks[ticket] = callback
+	realm.conn_callbacks[ticket] = callback
 	return
 }
 
@@ -119,9 +119,9 @@ func client_handle_set_state(ctx *context, client *Client, msg *backend.SetState
 }
 
 func client_handle_client_conn_ready(ctx *context, client *Client, msg *backend.ClientConnReadyMsg) {
-	if callback, ok := client.realm.callbacks[msg.Ticket]; ok {
+	if callback, ok := client.realm.conn_callbacks[msg.Ticket]; ok {
 		callback <- true
-		delete(client.realm.callbacks, msg.Ticket)
+		delete(client.realm.conn_callbacks, msg.Ticket)
 	} else {
 		log.Printf("[realm-%02d] tried to allow a unknown client connection", client.realm.Id)
 	}
