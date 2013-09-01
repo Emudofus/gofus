@@ -168,3 +168,34 @@ func (msg ClientConnReadyMsg) Deserialize(in io.Reader) error {
 	Read(in, &msg.Ticket)
 	return nil
 }
+
+type UserPlayersReqMsg struct {
+	UserId uint64
+}
+
+func (msg UserPlayersReqMsg) Opcode() uint16 { return 8 }
+func (msg UserPlayersReqMsg) Serialize(out io.Writer) error {
+	Put(out, msg.UserId)
+	return nil
+}
+func (msg UserPlayersReqMsg) Deserialize(in io.Reader) error {
+	Read(in, &msg.UserId)
+	return nil
+}
+
+type UserPlayersRespMsg struct {
+	UserId  uint64
+	Players uint8
+}
+
+func (msg UserPlayersRespMsg) Opcode() uint16 { return 9 }
+func (msg UserPlayersRespMsg) Serialize(out io.Writer) error {
+	Put(out, msg.UserId)
+	Put(out, msg.Players)
+	return nil
+}
+func (msg UserPlayersRespMsg) Deserialize(in io.Reader) error {
+	Read(in, &msg.UserId)
+	Read(in, &msg.Players)
+	return nil
+}

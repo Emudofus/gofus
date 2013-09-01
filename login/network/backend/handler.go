@@ -14,8 +14,9 @@ type Realm struct {
 	Address string
 	Port    uint16
 
-	client         *Client
-	conn_callbacks map[string]chan bool // ticket -> callback
+	client            *Client
+	conn_callbacks    map[string]chan bool // ticket -> callback
+	players_callbacks map[uint]chan frontend.RealmServerPlayers
 }
 
 func NewRealm(client *Client) *Realm {
@@ -25,9 +26,17 @@ func NewRealm(client *Client) *Realm {
 	return realm
 }
 
-func (realm *Realm) NotifyUserConnection(ticket string, user *db.User) (callback chan bool) {
+func (realm *Realm) AssertJoinable() {
 	if !realm.Joinable {
 		panic(fmt.Sprintf("realm %d is not joinable", realm.Id))
+	}
+}
+
+func (realm *Realm) NotifyUserConnection(ticket string, user *db.User) (callback chan bool) {
+	realm.AssertJoinable()
+
+	if _, exists := realm.conn_callbacks[ticket]; exists {
+		return // TODO prevent any flood
 	}
 
 	realm.client.Send(&backend.ClientConnMsg{
@@ -43,6 +52,20 @@ func (realm *Realm) NotifyUserConnection(ticket string, user *db.User) (callback
 
 	callback = make(chan bool, 1)
 	realm.conn_callbacks[ticket] = callback
+	return
+}
+
+func (realm *Realm) AskPlayers(userId uint) (callback chan frontend.RealmServerPlayers) {
+	realm.AssertJoinable()
+
+	if _, exists := realm.players_callbacks[userId]; exists {
+		return // TODO prevent any flood
+	}
+
+	realm.client.Send(&backend.UserPlayersReqMsg{uint64(userId)})
+
+	callback = make(chan frontend.RealmServerPlayers, 1)
+	realm.players_callbacks[userId] = callback
 	return
 }
 
@@ -70,6 +93,8 @@ func client_handle_data(ctx *context, client *Client, arg backend.Message) {
 		client_handle_set_state(ctx, client, msg)
 	case *backend.ClientConnReadyMsg:
 		client_handle_client_conn_ready(ctx, client, msg)
+	case *backend.UserPlayersRespMsg:
+		client_handle_user_players(ctx, client, msg)
 	}
 }
 
@@ -124,5 +149,16 @@ func client_handle_client_conn_ready(ctx *context, client *Client, msg *backend.
 		delete(client.realm.conn_callbacks, msg.Ticket)
 	} else {
 		log.Printf("[realm-%02d] tried to allow a unknown client connection", client.realm.Id)
+	}
+}
+
+func client_handle_user_players(ctx *context, client *Client, msg *backend.UserPlayersRespMsg) {
+	if callback, ok := client.realm.players_callbacks[uint(msg.UserId)]; ok {
+		callback <- frontend.RealmServerPlayers{
+			Id:      client.realm.Id,
+			Players: int(msg.Players),
+		}
+	} else {
+		log.Printf("[realm-%02d] tried to give players but wasn't necessary", client.realm.Id)
 	}
 }
