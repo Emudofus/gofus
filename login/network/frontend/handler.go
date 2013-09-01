@@ -7,6 +7,7 @@ import (
 	"github.com/Blackrush/gofus/protocol/frontend/msg"
 	"github.com/Blackrush/gofus/protocol/frontend/types"
 	"github.com/Blackrush/gofus/shared"
+	db2 "github.com/Blackrush/gofus/shared/db"
 	"log"
 )
 
@@ -63,7 +64,7 @@ func client_authenticate(ctx *context, client Client, username, password string)
 	} else if !user.ValidPassword(shared.DecryptDofusPassword(password, client.Ticket())) {
 		client.Send(&msg.LoginError{})
 		return nil, false
-	} else if !user.Rights.Has(db.LoginRight) {
+	} else if !user.Rights.Has(db2.LoginRight) {
 		client.Send(&msg.BannedUser{})
 		return nil, false
 	}

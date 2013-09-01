@@ -1,20 +1,12 @@
 package protocol
 
 import (
-	"io"
+	"github.com/Blackrush/gofus/protocol"
 )
 
-type Serializer interface {
-	Serialize(out io.Writer) error
-}
-
-type Deserializer interface {
-	Deserialize(in io.Reader) error
-}
-
 type MessageContainer interface {
-	Serializer
-	Deserializer
+	protocol.Serializer
+	protocol.Deserializer
 	Opcode() string
 }
 
