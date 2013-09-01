@@ -15,6 +15,9 @@ func Open(config *Configuration) (db *sql.DB) {
 	if err != nil {
 		panic(err.Error())
 	}
+	if err = db.Ping(); err != nil {
+		panic(err.Error())
+	}
 
 	log.Print("[database] successfully opened")
 	return
