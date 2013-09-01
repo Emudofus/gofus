@@ -19,10 +19,6 @@ const (
 	salt_len  = 100
 )
 
-var (
-	message_delimiter = []byte{0}
-)
-
 type Configuration struct {
 	Port     uint16
 	Password string

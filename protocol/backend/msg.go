@@ -57,7 +57,7 @@ func (msg *AuthReqMsg) Deserialize(in io.Reader) error {
 	var tmp uint32
 	Read(in, &tmp)
 	msg.Credentials = make([]byte, tmp)
-	Read(in, &msg.Credentials)
+	Read(in, msg.Credentials)
 	return nil
 }
 

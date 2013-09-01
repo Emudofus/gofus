@@ -14,6 +14,7 @@ import (
 var (
 	fport   = flag.Int("fport", 5555, "the port the frontend server will listen on")
 	bport   = flag.Int("bport", 5554, "the port the backend server will listen on")
+	bpass   = flag.String("bpass", "", "the password used to secure the backend server")
 	workers = flag.Int("workers", 1, "the number of workers to start")
 
 	dbuser = flag.String("dbuser", "postgres", "the username used to connect to the PostgreSQL database")
@@ -46,7 +47,8 @@ func main() {
 	defer database.Close()
 
 	bnet := bnetwork.New(database, bnetwork.Configuration{
-		Port: uint16(*bport),
+		Port:     uint16(*bport),
+		Password: *bpass,
 	})
 
 	go bnet.Start()

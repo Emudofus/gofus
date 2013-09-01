@@ -67,7 +67,7 @@ func Put(out io.Writer, arg interface{}) (n int, err error) {
 	case float64:
 		return Put(out, math.Float64bits(value))
 	case string:
-		return Put(out, uint32(len(value)))
+		Put(out, uint32(len(value)))
 		return Put(out, []byte(value))
 	case bool:
 		if value {
