@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	bnetwork "github.com/Blackrush/gofus/login/network/backend"
 	fnetwork "github.com/Blackrush/gofus/login/network/frontend"
 	"github.com/Blackrush/gofus/shared/db"
 	_ "github.com/lib/pq"
@@ -44,12 +45,12 @@ func main() {
 	})
 	defer database.Close()
 
-	//rnet := rnetwork.New(rnetwork.Configuration{
-	//	Port: uint16(*rport),
-	//})
+	bnet := bnetwork.New(database, bnetwork.Configuration{
+		Port: uint16(*bport),
+	})
 
-	//go rnet.Start()
-	//defer rnet.Stop()
+	go bnet.Start()
+	defer bnet.Stop()
 
 	fnet := fnetwork.New(database, fnetwork.Configuration{
 		Port:    uint16(*fport),
