@@ -21,3 +21,7 @@ type MessageContainer interface {
 type Sender interface {
 	Send(msg MessageContainer) (int, error)
 }
+
+type CloseWither interface {
+	CloseWith(msg MessageContainer) error
+}

@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"bytes"
 	"math/rand"
 	"strings"
 )
@@ -30,7 +31,16 @@ func NextString(src rand.Source, length int) string {
 	panic("unreachable")
 }
 
-func Split2(in, sep string) (string, string) {
+func Splits2(in, sep []byte) (string, string) {
+	index := bytes.Index(in, sep)
+	if index < 0 {
+		return string(in), ""
+	} else {
+		return string(in[:index]), string(in[index+len(sep):])
+	}
+}
+
+func Ssplits2(in, sep string) (string, string) {
 	res := strings.SplitN(in, sep, 2)
 	return res[0], res[1]
 }

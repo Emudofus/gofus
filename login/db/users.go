@@ -40,6 +40,10 @@ func (user *User) String() string {
 	return fmt.Sprintf("User{ Id: %d, Name: %s, Nickname: %s, Rights: %d }", user.Id, user.Name, user.Nickname, user.Rights)
 }
 
+func (user *User) ValidPassword(password string) bool {
+	return user.Password == password
+}
+
 type Users struct{ *sql.DB }
 
 func scan_user(rows *sql.Rows, user *User) error {

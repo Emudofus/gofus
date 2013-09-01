@@ -3,8 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	lnetwork "github.com/Blackrush/gofus/login/network/login"
-	rnetwork "github.com/Blackrush/gofus/login/network/realm"
+	fnetwork "github.com/Blackrush/gofus/login/network/frontend"
 	"github.com/Blackrush/gofus/shared/db"
 	_ "github.com/lib/pq"
 	"os"
@@ -12,9 +11,9 @@ import (
 )
 
 var (
-	lport     = flag.Int("lport", 5555, "the port the login server will listen on")
-	rport     = flag.Int("rport", 5554, "the port the realm server will listen on")
-	nbWorkers = flag.Int("nbWorkers", 1, "the number of workers to start")
+	fport   = flag.Int("fport", 5555, "the port the frontend server will listen on")
+	bport   = flag.Int("bport", 5554, "the port the backend server will listen on")
+	workers = flag.Int("workers", 1, "the number of workers to start")
 
 	dbuser = flag.String("dbuser", "postgres", "the username used to connect to the PostgreSQL database")
 	dbname = flag.String("dbname", "gofus", "the name of the PostgreSQL database")
@@ -41,24 +40,24 @@ func main() {
 
 	database := db.Open(&db.Configuration{
 		Driver:         "postgres",
-		DataSourceName: fmt.Sprint("user=%s dbname=%s password=%s sslmode=disable", *dbuser, *dbname, *dbpass),
+		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", *dbuser, *dbname, *dbpass),
 	})
 	defer database.Close()
 
-	rnet := rnetwork.New(rnetwork.Configuration{
-		Port: uint16(*rport),
+	//rnet := rnetwork.New(rnetwork.Configuration{
+	//	Port: uint16(*rport),
+	//})
+
+	//go rnet.Start()
+	//defer rnet.Stop()
+
+	fnet := fnetwork.New(database, fnetwork.Configuration{
+		Port:    uint16(*fport),
+		Workers: *workers,
 	})
 
-	go rnet.Start()
-	defer rnet.Stop()
-
-	lnet := lnetwork.New(database, lnetwork.Configuration{
-		Port:      uint16(*lport),
-		NbWorkers: *nbWorkers,
-	})
-
-	go lnet.Start()
-	defer lnet.Stop()
+	go fnet.Start()
+	defer fnet.Stop()
 
 	<-wait_user_input()
 }

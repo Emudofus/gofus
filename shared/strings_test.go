@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+func TestSplits2(t *testing.T) {
+	in, sep := []byte("hola#hello"), []byte("#")
+	if left, right := Splits2(in, sep); left != "hola" || right != "hello" {
+		t.Fail()
+	}
+}
+
 func TestCryptDofusPassword(t *testing.T) {
 	password, ticket := "test", "azertyuiopqsdfghjklmwxcvbn012345"
 

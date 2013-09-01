@@ -2,7 +2,7 @@ package network
 
 import (
 	"bytes"
-	"github.com/Blackrush/gofus/protocol"
+	protocol "github.com/Blackrush/gofus/protocol/frontend"
 	"io"
 	"log"
 	"net"
