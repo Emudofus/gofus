@@ -19,13 +19,6 @@ type Realm struct {
 	players_callbacks map[uint]chan frontend.RealmServerPlayers
 }
 
-func NewRealm(client *Client) *Realm {
-	realm := new(Realm)
-	realm.client = client
-	realm.conn_callbacks = make(map[string]chan bool)
-	return realm
-}
-
 func (realm *Realm) AssertJoinable() {
 	if !realm.Joinable {
 		panic(fmt.Sprintf("realm %d is not joinable", realm.Id))
@@ -56,7 +49,13 @@ func (realm *Realm) NotifyUserConnection(ticket string, user *db.User) (callback
 }
 
 func (realm *Realm) AskPlayers(userId uint, callback chan frontend.RealmServerPlayers) {
-	realm.AssertJoinable()
+	if !realm.Joinable {
+		callback <- frontend.RealmServerPlayers{
+			Id:      realm.Id,
+			Players: 0,
+		}
+		return
+	}
 
 	if _, exists := realm.players_callbacks[userId]; exists {
 		return // TODO prevent any flood
@@ -76,6 +75,18 @@ func client_disconnection(ctx *context, client *Client) {
 
 		client.realm.State = frontend.RealmOfflineState
 		client.realm.Joinable = false
+
+		for _, callback := range client.realm.conn_callbacks {
+			close(callback)
+		}
+		client.realm.conn_callbacks = nil
+
+		for _, callback := range client.realm.players_callbacks {
+			close(callback)
+		}
+		client.realm.players_callbacks = nil
+
+		client.realm.client = nil
 		client.realm = nil
 	}
 }
@@ -95,11 +106,8 @@ func client_handle_data(ctx *context, client *Client, arg backend.Message) {
 	}
 }
 
-func client_authenticate(ctx *context, client *Client, credentials []byte) (*Realm, bool) {
-	if bytes.Equal(ctx.get_password_hash(client.salt), credentials) {
-		return NewRealm(client), true
-	}
-	return nil, false
+func client_authenticate(ctx *context, client *Client, credentials []byte) bool {
+	return bytes.Equal(ctx.get_password_hash(client.salt), credentials)
 }
 
 func client_handle_auth(ctx *context, client *Client, msg *backend.AuthReqMsg) {
@@ -108,11 +116,22 @@ func client_handle_auth(ctx *context, client *Client, msg *backend.AuthReqMsg) {
 		return
 	}
 
-	if _, exists := ctx.realms[int(msg.Id)]; exists {
+	realm, exists := ctx.realms[int(msg.Id)]
+
+	if exists && realm.Joinable {
 		goto failure
-	} else if realm, ok := client_authenticate(ctx, client, msg.Credentials); ok {
-		realm.Id = int(msg.Id)
-		ctx.realms[realm.Id] = realm
+	}
+
+	if client_authenticate(ctx, client, msg.Credentials) {
+		if !exists {
+			realm = new(Realm)
+			realm.Id = int(msg.Id)
+			ctx.realms[realm.Id] = realm
+		}
+		realm.client = client
+		realm.conn_callbacks = make(map[string]chan bool)
+		realm.players_callbacks = make(map[uint]chan frontend.RealmServerPlayers)
+
 		client.realm = realm
 
 		client.Send(&backend.AuthRespMsg{Success: true})
@@ -131,11 +150,14 @@ func client_handle_set_infos(ctx *context, client *Client, msg *backend.SetInfos
 	client.realm.Port = msg.Port
 	client.realm.Completion = int(msg.Completion)
 
+	log.Printf("%+v", *client.realm)
+
 	log.Printf("[realm-%02d] updated his infos", client.realm.Id)
 }
 
 func client_handle_set_state(ctx *context, client *Client, msg *backend.SetStateMsg) {
 	client.realm.State = msg.State
+	client.realm.Joinable = msg.State == frontend.RealmOnlineState
 
 	log.Printf("[realm-%02d] updated his state, now %d", client.realm.Id, client.realm.State)
 }

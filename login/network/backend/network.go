@@ -158,6 +158,8 @@ func conn_rcv(conn net.Conn) (backend.Message, bool) {
 		return msg, true
 	}
 
+	log.Printf("[backend-net-client-%04d] unknown opcode %d", opcode)
+
 	return nil, false
 }
 

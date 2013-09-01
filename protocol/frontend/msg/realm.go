@@ -24,3 +24,15 @@ func (msg *RealmLoginReq) Deserialize(in io.Reader) error {
 	fmt.Fscanf(in, "AT%s", &msg.Ticket)
 	return nil
 }
+
+type RealmLoginSuccess struct{}
+
+func (msg *RealmLoginSuccess) Opcode() string                 { return "ATK" }
+func (msg *RealmLoginSuccess) Serialize(out io.Writer) error  { return nil }
+func (msg *RealmLoginSuccess) Deserialize(in io.Reader) error { return nil }
+
+type RealmLoginError struct{}
+
+func (msg *RealmLoginError) Opcode() string                 { return "ATE" }
+func (msg *RealmLoginError) Serialize(out io.Writer) error  { return nil }
+func (msg *RealmLoginError) Deserialize(in io.Reader) error { return nil }

@@ -17,6 +17,8 @@ func init() {
 	producers[5] = func() Message { return new(SetStateMsg) }
 	producers[6] = func() Message { return new(ClientConnMsg) }
 	producers[7] = func() Message { return new(ClientConnReadyMsg) }
+	producers[8] = func() Message { return new(UserPlayersReqMsg) }
+	producers[9] = func() Message { return new(UserPlayersRespMsg) }
 }
 
 func NewMsg(opcode uint16) (Message, bool) {
@@ -81,14 +83,14 @@ type SetInfosMsg struct {
 	Completion uint32
 }
 
-func (msg SetInfosMsg) Opcode() uint16 { return 4 }
-func (msg SetInfosMsg) Serialize(out io.Writer) error {
+func (msg *SetInfosMsg) Opcode() uint16 { return 4 }
+func (msg *SetInfosMsg) Serialize(out io.Writer) error {
 	Put(out, msg.Address)
 	Put(out, msg.Port)
 	Put(out, msg.Completion)
 	return nil
 }
-func (msg SetInfosMsg) Deserialize(in io.Reader) error {
+func (msg *SetInfosMsg) Deserialize(in io.Reader) error {
 	Read(in, &msg.Address)
 	Read(in, &msg.Port)
 	Read(in, &msg.Completion)
@@ -119,7 +121,7 @@ type UserInfos struct {
 	Rights          db.UserRight
 }
 
-func (msg UserInfos) Serialize(out io.Writer) error {
+func (msg *UserInfos) Serialize(out io.Writer) error {
 	Put(out, msg.Id)
 	Put(out, msg.SecretQuestion)
 	Put(out, msg.SecretAnswer)
@@ -127,7 +129,7 @@ func (msg UserInfos) Serialize(out io.Writer) error {
 	Put(out, int64(msg.Rights))
 	return nil
 }
-func (msg UserInfos) Deserialize(in io.Reader) error {
+func (msg *UserInfos) Deserialize(in io.Reader) error {
 	Read(in, &msg.Id)
 	Read(in, &msg.SecretQuestion)
 	Read(in, &msg.SecretAnswer)
@@ -143,13 +145,13 @@ type ClientConnMsg struct {
 	User   UserInfos
 }
 
-func (msg ClientConnMsg) Opcode() uint16 { return 6 }
-func (msg ClientConnMsg) Serialize(out io.Writer) error {
+func (msg *ClientConnMsg) Opcode() uint16 { return 6 }
+func (msg *ClientConnMsg) Serialize(out io.Writer) error {
 	Put(out, msg.Ticket)
-	Put(out, msg.User)
+	Put(out, &msg.User)
 	return nil
 }
-func (msg ClientConnMsg) Deserialize(in io.Reader) error {
+func (msg *ClientConnMsg) Deserialize(in io.Reader) error {
 	Read(in, &msg.Ticket)
 	Read(in, &msg.User)
 	return nil
@@ -159,12 +161,12 @@ type ClientConnReadyMsg struct {
 	Ticket string
 }
 
-func (msg ClientConnReadyMsg) Opcode() uint16 { return 7 }
-func (msg ClientConnReadyMsg) Serialize(out io.Writer) error {
+func (msg *ClientConnReadyMsg) Opcode() uint16 { return 7 }
+func (msg *ClientConnReadyMsg) Serialize(out io.Writer) error {
 	Put(out, msg.Ticket)
 	return nil
 }
-func (msg ClientConnReadyMsg) Deserialize(in io.Reader) error {
+func (msg *ClientConnReadyMsg) Deserialize(in io.Reader) error {
 	Read(in, &msg.Ticket)
 	return nil
 }
@@ -173,12 +175,12 @@ type UserPlayersReqMsg struct {
 	UserId uint64
 }
 
-func (msg UserPlayersReqMsg) Opcode() uint16 { return 8 }
-func (msg UserPlayersReqMsg) Serialize(out io.Writer) error {
+func (msg *UserPlayersReqMsg) Opcode() uint16 { return 8 }
+func (msg *UserPlayersReqMsg) Serialize(out io.Writer) error {
 	Put(out, msg.UserId)
 	return nil
 }
-func (msg UserPlayersReqMsg) Deserialize(in io.Reader) error {
+func (msg *UserPlayersReqMsg) Deserialize(in io.Reader) error {
 	Read(in, &msg.UserId)
 	return nil
 }
@@ -188,13 +190,13 @@ type UserPlayersRespMsg struct {
 	Players uint8
 }
 
-func (msg UserPlayersRespMsg) Opcode() uint16 { return 9 }
-func (msg UserPlayersRespMsg) Serialize(out io.Writer) error {
+func (msg *UserPlayersRespMsg) Opcode() uint16 { return 9 }
+func (msg *UserPlayersRespMsg) Serialize(out io.Writer) error {
 	Put(out, msg.UserId)
 	Put(out, msg.Players)
 	return nil
 }
-func (msg UserPlayersRespMsg) Deserialize(in io.Reader) error {
+func (msg *UserPlayersRespMsg) Deserialize(in io.Reader) error {
 	Read(in, &msg.UserId)
 	Read(in, &msg.Players)
 	return nil
