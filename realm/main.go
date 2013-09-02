@@ -15,6 +15,7 @@ var (
 	bid        = flag.Uint("id", 1, "the id of the realm server")
 	addr       = flag.String("addr", "127.0.0.1", "the address of the realm server")
 	completion = flag.Int("completion", 0, "the completion of the realm server")
+	community  = flag.Int("community", 0, "the community id of the realm server")
 	bladdr     = flag.String("bladdr", ":5554", "the address and port the backend service will connect to")
 	bpass      = flag.String("bpass", "", "the password used to secure backend service")
 	workers    = flag.Int("workers", 1, "the number of workers to spawn")
@@ -60,8 +61,9 @@ func main() {
 	defer bnet.Stop()
 
 	fnet := fnetwork.New(database, bnet, fnetwork.Configuration{
-		Port:    uint16(*fport),
-		Workers: *workers,
+		Port:        uint16(*fport),
+		Workers:     *workers,
+		CommunityId: *community,
 	})
 
 	go fnet.Start()

@@ -4,6 +4,7 @@ import (
 	digest "crypto/sha512"
 	"database/sql"
 	"fmt"
+	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/protocol/backend"
 	"github.com/Blackrush/gofus/shared"
 	"hash"
@@ -34,7 +35,8 @@ type Service interface {
 type context struct {
 	config Configuration
 
-	db *sql.DB
+	db    *sql.DB
+	users *db.Users
 
 	running        bool
 	nextClientId   <-chan uint64
@@ -47,6 +49,7 @@ func New(database *sql.DB, config Configuration) Service {
 	return &context{
 		config: config,
 		db:     database,
+		users:  &db.Users{database},
 		realms: make(map[int]*Realm),
 	}
 }

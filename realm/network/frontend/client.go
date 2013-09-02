@@ -17,7 +17,7 @@ type Client interface {
 	Alive() bool
 
 	Id() uint64
-	UserInfos() backend.UserInfos
+	UserInfos() *backend.UserInfos
 	SetUserInfos(userInfos backend.UserInfos)
 }
 
@@ -26,7 +26,7 @@ type net_client struct {
 	alive bool
 
 	id        uint64
-	userInfos backend.UserInfos
+	userInfos *backend.UserInfos
 }
 
 func new_net_client(conn net.Conn, id uint64) *net_client {
@@ -37,14 +37,17 @@ func new_net_client(conn net.Conn, id uint64) *net_client {
 	}
 }
 
+func (client *net_client) Write(b []byte) (int, error) {
+	log.Printf("[frontend-net-client-%04d] SND(%03d) %s", client.Id(), len(b), b)
+	return client.Conn.Write(b)
+}
+
 func (client *net_client) Close() error {
 	client.alive = false
 	return client.Conn.Close()
 }
 
 func (client *net_client) Send(msg protocol.MessageContainer) (int, error) {
-	log.Printf("[frontend-net-client-%04d] SND(%s) %+v", client.Id(), msg.Opcode(), msg)
-
 	buf := new(bytes.Buffer)
 	buf.WriteString(msg.Opcode())
 	msg.Serialize(buf)
@@ -67,10 +70,10 @@ func (client *net_client) Id() uint64 {
 	return client.id
 }
 
-func (client *net_client) UserInfos() backend.UserInfos {
+func (client *net_client) UserInfos() *backend.UserInfos {
 	return client.userInfos
 }
 
 func (client *net_client) SetUserInfos(userInfos backend.UserInfos) {
-	client.userInfos = userInfos
+	client.userInfos = &userInfos
 }

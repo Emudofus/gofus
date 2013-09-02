@@ -20,8 +20,9 @@ const (
 )
 
 type Configuration struct {
-	Port    uint16
-	Workers int
+	Port        uint16
+	Workers     int
+	CommunityId int
 }
 
 type Service interface {
@@ -111,6 +112,7 @@ func server_conn_rcv(ctx *context, conn net.Conn) {
 	buf := shared.Bufferize(conn, []byte(input_msg_delimiter), chunk_len)
 	for ctx.running && client.alive {
 		if data, ok := <-buf; ok {
+			log.Printf("[frontend-net-client-%04d] RCV(%03d) %s", client.Id(), len(data), data)
 			if msg, ok := msg.New(string(data[:2])); ok {
 				in := bytes.NewReader(data)
 				msg.Deserialize(in)

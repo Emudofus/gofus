@@ -34,6 +34,7 @@ func delimited_buffer(input io.Reader, output chan<- []byte, delimiter []byte, c
 				data = make([]byte, index+len(buffer))
 				copy(data, buffer)
 				copy(data[len(buffer):], received)
+				buffer = nil
 			} else {
 				data = make([]byte, index)
 				copy(data, received)

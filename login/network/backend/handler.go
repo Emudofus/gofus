@@ -103,6 +103,8 @@ func client_handle_data(ctx *context, client *Client, arg backend.Message) {
 		client_handle_client_conn_ready(ctx, client, msg)
 	case *backend.UserPlayersRespMsg:
 		client_handle_user_players(ctx, client, msg)
+	case *backend.UserConnectedMsg:
+		client_handle_user_connected(ctx, client, msg)
 	}
 }
 
@@ -150,8 +152,6 @@ func client_handle_set_infos(ctx *context, client *Client, msg *backend.SetInfos
 	client.realm.Port = msg.Port
 	client.realm.Completion = int(msg.Completion)
 
-	log.Printf("%+v", *client.realm)
-
 	log.Printf("[realm-%02d] updated his infos", client.realm.Id)
 }
 
@@ -172,12 +172,37 @@ func client_handle_client_conn_ready(ctx *context, client *Client, msg *backend.
 }
 
 func client_handle_user_players(ctx *context, client *Client, msg *backend.UserPlayersRespMsg) {
-	if callback, ok := client.realm.players_callbacks[uint(msg.UserId)]; ok {
+	id := uint(msg.UserId)
+
+	if callback, ok := client.realm.players_callbacks[id]; ok {
 		callback <- frontend.RealmServerPlayers{
 			Id:      client.realm.Id,
 			Players: int(msg.Players),
 		}
+		delete(client.realm.players_callbacks, id)
 	} else {
 		log.Printf("[realm-%02d] tried to give players but wasn't necessary", client.realm.Id)
+	}
+}
+
+func client_handle_user_connected(ctx *context, client *Client, msg *backend.UserConnectedMsg) {
+	if user, err := ctx.users.FindById(int(msg.UserId)); err == nil {
+		if msg.Connected {
+			if user.IsConnected() {
+				log.Printf("[realm-%02d] user %d is already connected", user.Id)
+			} else {
+				user.CurrentRealmServerId = client.realm.Id
+				ctx.users.Update(user)
+			}
+		} else {
+			if user.CurrentRealmServerId != client.realm.Id {
+				log.Printf("[realm-%02d] has no right to mark user %d as disconnected", client.realm.Id, user.Id)
+			} else {
+				user.CurrentRealmServerId = -1
+				ctx.users.Update(user)
+			}
+		}
+	} else {
+		panic(err.Error())
 	}
 }

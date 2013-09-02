@@ -26,6 +26,7 @@ type Service interface {
 
 	SetState(state frontend.RealmServerState)
 	GetUserInfos(ticket string) (*backend.UserInfos, bool)
+	NotifyUserConnection(userId uint64, connected bool)
 }
 
 type context struct {
@@ -83,6 +84,10 @@ func (ctx *context) GetUserInfos(ticket string) (*backend.UserInfos, bool) {
 		return infos, true
 	}
 	return nil, false
+}
+
+func (ctx *context) NotifyUserConnection(userId uint64, connected bool) {
+	go ctx.send(&backend.UserConnectedMsg{userId, connected})
 }
 
 func conn_rcv(conn net.Conn) (backend.Message, bool) {

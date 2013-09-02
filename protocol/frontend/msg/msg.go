@@ -19,6 +19,11 @@ func init() {
 	producers["Af"] = func() protocol.MessageContainer { return new(QueueStatusRequest) }
 	producers["AX"] = func() protocol.MessageContainer { return new(RealmServerSelectionRequest) }
 	producers["AT"] = func() protocol.MessageContainer { return new(RealmLoginReq) }
+	producers["Ak"] = func() protocol.MessageContainer { return new(ClientUseKeyReq) }
+	producers["AV"] = func() protocol.MessageContainer { return new(RegionalVersionReq) }
+	producers["Ag"] = func() protocol.MessageContainer { return new(PlayersGiftsReq) }
+	producers["AG"] = func() protocol.MessageContainer { return new(SetPlayerGiftReq) }
+	producers["AL"] = func() protocol.MessageContainer { return new(PlayersReq) }
 }
 
 func New(opcode string) (protocol.MessageContainer, bool) {

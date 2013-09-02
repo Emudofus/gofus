@@ -67,6 +67,9 @@ func client_authenticate(ctx *context, client Client, username, password string)
 	} else if !user.Rights.Has(db2.LoginRight) {
 		client.Send(&msg.BannedUser{})
 		return nil, false
+	} else if user.IsConnected() {
+		client.Send(&msg.AlreadyConnectedUser{})
+		return nil, false
 	}
 
 	return user, true

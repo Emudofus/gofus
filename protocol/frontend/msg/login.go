@@ -48,6 +48,12 @@ func (msg *BannedUser) Opcode() string                 { return "AlEb" }
 func (msg *BannedUser) Serialize(out io.Writer) error  { return nil }
 func (msg *BannedUser) Deserialize(in io.Reader) error { return nil }
 
+type AlreadyConnectedUser struct{}
+
+func (msg *AlreadyConnectedUser) Opcode() string                 { return "AlEc" }
+func (msg *AlreadyConnectedUser) Serialize(out io.Writer) error  { return nil }
+func (msg *AlreadyConnectedUser) Deserialize(in io.Reader) error { return nil }
+
 type QueueStatusRequest struct{}
 
 func (msg *QueueStatusRequest) Opcode() string                 { return "Af" }
