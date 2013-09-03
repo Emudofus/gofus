@@ -11,13 +11,3 @@ type Serializer interface {
 type Deserializer interface {
 	Deserialize(in io.Reader) error
 }
-
-type MessageContainer interface {
-	Serializer
-	Deserializer
-	Opcode() string
-}
-
-type Sender interface {
-	Send(msg MessageContainer) (int, error)
-}

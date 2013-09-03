@@ -1,10 +1,37 @@
 package shared
 
 import (
-	"testing"
 	"math/rand"
+	"testing"
 	"time"
 )
+
+func TestSplits2(t *testing.T) {
+	in, sep := []byte("hola#hello"), []byte("#")
+	if left, right := Splits2(in, sep); left != "hola" || right != "hello" {
+		t.Fail()
+	}
+}
+
+func TestCryptDofusPassword(t *testing.T) {
+	password, ticket := "test", "azertyuiopqsdfghjklmwxcvbn012345"
+
+	expected := "OLa_SO52"
+
+	if test := CryptDofusPassword(password, ticket); test != expected {
+		t.Errorf("%s is not equal to %s", test, expected)
+	}
+}
+
+func TestDecryptDofusPassword(t *testing.T) {
+	password, ticket := "test", "azertyuiopqsdfghjklmwxcvbn012345"
+
+	test := DecryptDofusPassword(CryptDofusPassword(password, ticket), ticket)
+
+	if test != password {
+		t.Errorf("%s is not equal to %s", test, password)
+	}
+}
 
 var (
 	result string
