@@ -27,13 +27,13 @@ func handle_client_data(ctx *context, client Client, data string) {
 			client.SetState(LoginState)
 		} else {
 			client.Send(&msg.BadVersion{ Required: clientVersion })
-			close_conn(ctx, client)
+			client.Close()
 		}
 	case LoginState:
 	case RealmState:
 	default:
 		// No need to panic, it's only one client who got lost; just log and kick him out
 		log.Print("unknown state ", client.State(), " of client #", client.Id())
-		close_conn(ctx, client)
+		client.Close()
 	}
 }
