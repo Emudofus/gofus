@@ -42,7 +42,7 @@ func main() {
 
 	database := db.Open(&db.Configuration{
 		Driver:         "postgres",
-		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", *dbuser, *dbname, *dbpass),
+		DataSourceName: fmt.Sprintf("user='%s' dbname='%s' password='%s' sslmode=disable", *dbuser, *dbname, *dbpass),
 	})
 	defer database.Close()
 
