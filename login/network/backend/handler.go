@@ -21,7 +21,7 @@ type Realm struct {
 
 func (realm *Realm) AssertJoinable() {
 	if !realm.Joinable {
-		panic(fmt.Sprintf("realm %d is not joinable", realm.Id))
+		log.Panic(fmt.Sprintf("realm %d is not joinable", realm.Id))
 	}
 }
 
@@ -203,6 +203,6 @@ func client_handle_user_connected(ctx *context, client *Client, msg *backend.Use
 			}
 		}
 	} else {
-		panic(err.Error())
+		log.Panic(err.Error())
 	}
 }

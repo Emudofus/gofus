@@ -56,7 +56,7 @@ func New(database *sql.DB, config Configuration) Service {
 
 func (ctx *context) Start() {
 	if ctx.running {
-		panic("backend network service already running")
+		log.Panic("backend network service already running")
 	}
 	ctx.running = true
 
@@ -125,7 +125,7 @@ func client_salt_generator(ctx *context) {
 func server_listen(ctx *context) {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.config.Port))
 	if err != nil {
-		panic(err.Error())
+		log.Panic(err.Error())
 	}
 
 	defer listener.Close()
@@ -135,7 +135,7 @@ func server_listen(ctx *context) {
 	for ctx.running {
 		conn, err := listener.Accept()
 		if err != nil {
-			panic(err.Error())
+			log.Panic(err.Error())
 		}
 
 		go server_conn_rcv(ctx, conn)
@@ -148,14 +148,14 @@ func conn_rcv(conn net.Conn) (backend.Message, bool) {
 	if n, err := backend.Read(conn, &opcode); n <= 0 || err == io.EOF {
 		return nil, false
 	} else if err != nil {
-		panic(err.Error())
+		log.Panic(err.Error())
 	}
 
 	if msg, ok := backend.NewMsg(opcode); ok {
 		if err := msg.Deserialize(conn); err == io.EOF {
 			return nil, false
 		} else if err != nil {
-			panic(err.Error())
+			log.Panic(err.Error())
 		}
 
 		return msg, true

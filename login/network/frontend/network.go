@@ -53,7 +53,7 @@ func New(database *sql.DB, backend backend.Service, config Configuration) shared
 
 func (ctx *context) Start() {
 	if ctx.running {
-		panic("frontend network already running")
+		log.Panic("frontend network already running")
 	}
 	ctx.running = true
 
@@ -100,7 +100,7 @@ func client_ticket_generator(ctx *context) {
 func server_listen(ctx *context) {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ctx.config.Port))
 	if err != nil {
-		panic(err.Error())
+		log.Panic(err.Error())
 	}
 
 	defer listener.Close()
@@ -110,7 +110,7 @@ func server_listen(ctx *context) {
 	for ctx.running {
 		conn, err := listener.Accept()
 		if err != nil {
-			panic(err.Error())
+			log.Panic(err.Error())
 		}
 
 		go server_conn_rcv(ctx, conn)
