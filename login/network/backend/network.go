@@ -2,7 +2,6 @@ package backend
 
 import (
 	digest "crypto/sha512"
-	"database/sql"
 	"fmt"
 	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/protocol/backend"
@@ -35,7 +34,6 @@ type Service interface {
 type context struct {
 	config Configuration
 
-	db    *sql.DB
 	users *db.Users
 
 	running        bool
@@ -45,11 +43,10 @@ type context struct {
 	realms map[int]*Realm
 }
 
-func New(database *sql.DB, config Configuration) Service {
+func New(users *db.Users, config Configuration) Service {
 	return &context{
 		config: config,
-		db:     database,
-		users:  &db.Users{database},
+		users:  users,
 		realms: make(map[int]*Realm),
 	}
 }

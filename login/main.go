@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	logindb "github.com/Blackrush/gofus/login/db"
 	bnetwork "github.com/Blackrush/gofus/login/network/backend"
 	fnetwork "github.com/Blackrush/gofus/login/network/frontend"
 	"github.com/Blackrush/gofus/shared/db"
@@ -54,7 +55,12 @@ func main() {
 	})
 	defer database.Close()
 
-	bnet := bnetwork.New(database, bnetwork.Configuration{
+	users := &logindb.Users{database}
+	if err := users.ResetCurrentRealm(); err != nil {
+		panic(err)
+	}
+
+	bnet := bnetwork.New(users, bnetwork.Configuration{
 		Port:     uint16(*bport),
 		Password: *bpass,
 	})
@@ -62,7 +68,7 @@ func main() {
 	go bnet.Start()
 	defer bnet.Stop()
 
-	fnet := fnetwork.New(database, bnet, fnetwork.Configuration{
+	fnet := fnetwork.New(users, bnet, fnetwork.Configuration{
 		Port:    uint16(*fport),
 		Workers: *workers,
 	})

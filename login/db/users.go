@@ -155,3 +155,13 @@ func (db *Users) Delete(user *User) error {
 
 	return nil
 }
+
+func (db *Users) ResetCurrentRealm() (err error) {
+	_, err = db.Exec("update users set current_realm_server='-1'")
+	return
+}
+
+func (db *Users) ResetCurrentRealmFor(id int) (err error) {
+	_, err = db.Exec("update users set current_realm_server='-1' where current_realm_server=$1", id)
+	return
+}

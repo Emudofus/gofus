@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/Blackrush/gofus/login/db"
 	"github.com/Blackrush/gofus/login/network/backend"
@@ -28,7 +27,6 @@ type Configuration struct {
 
 type context struct {
 	config  Configuration
-	db      *sql.DB
 	users   *db.Users
 	backend backend.Service
 
@@ -40,11 +38,10 @@ type context struct {
 	events chan event
 }
 
-func New(database *sql.DB, backend backend.Service, config Configuration) shared.StartStopper {
+func New(users *db.Users, backend backend.Service, config Configuration) shared.StartStopper {
 	return &context{
 		config:  config,
-		db:      database,
-		users:   &db.Users{database},
+		users:   users,
 		backend: backend,
 		tasks:   make(chan task, queue_len),
 		events:  make(chan event, queue_len),

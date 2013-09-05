@@ -73,6 +73,10 @@ func client_disconnection(ctx *context, client *Client) {
 	if client.realm != nil {
 		log.Printf("[realm-%02d] is now offline", client.realm.Id)
 
+		if err := ctx.users.ResetCurrentRealmFor(client.realm.Id); err != nil {
+			panic(err.Error())
+		}
+
 		client.realm.State = frontend.RealmOfflineState
 		client.realm.Joinable = false
 
