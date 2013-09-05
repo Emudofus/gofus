@@ -51,10 +51,20 @@ func client_handle_auth(ctx *context, msg *backend.AuthRespMsg) {
 }
 
 func client_handle_user_players(ctx *context, msg *backend.UserPlayersReqMsg) {
-	ctx.send(&backend.UserPlayersRespMsg{ // TODO
-		UserId:  msg.UserId,
-		Players: 1,
-	})
+	go func() { // make it async, think of other poor players waiting :-(
+		var players uint8
+
+		if p, ok := ctx.players.GetByOwnerId(uint(msg.UserId)); ok {
+			players = uint8(len(p))
+		} else {
+			players = 0
+		}
+
+		ctx.send(&backend.UserPlayersRespMsg{
+			UserId:  msg.UserId,
+			Players: players,
+		})
+	}()
 }
 
 func client_handle_client_connection(ctx *context, msg *backend.ClientConnMsg) {
