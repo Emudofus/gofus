@@ -43,6 +43,8 @@ func main() {
 (_______)(_______)|/       (_______)\_______) 
 `)
 
+	fmt.Println(*bladdr)
+
 	database := db.Open(&db.Configuration{
 		Driver:         "postgres",
 		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", *dbuser, *dbname, *dbpass),

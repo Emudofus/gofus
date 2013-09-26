@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Blackrush/gofus/protocol/backend"
 	frontend "github.com/Blackrush/gofus/protocol/frontend/types"
+	"github.com/Blackrush/gofus/realm/db"
 	"github.com/Blackrush/gofus/shared"
 	"hash"
 	"io"
@@ -30,7 +31,8 @@ type Service interface {
 }
 
 type context struct {
-	config Configuration
+	config  Configuration
+	players db.Players
 
 	running      bool
 	conn         net.Conn
