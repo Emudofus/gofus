@@ -90,6 +90,14 @@ type Players struct {
 	players_by_owner_id map[uint][]*Player
 }
 
+func NewPlayers(db *sql.DB) *Players {
+	return &Players{
+		db:                  db,
+		players:             make([]*Player, 0, 10),
+		players_by_owner_id: make(map[uint][]*Player),
+	}
+}
+
 func (p *Players) GetByOwnerId(ownerId uint) ([]*Player, bool) {
 	player, ok := p.players_by_owner_id[ownerId]
 	return player, ok

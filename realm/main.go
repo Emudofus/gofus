@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	realmdb "github.com/Blackrush/gofus/realm/db"
 	bnetwork "github.com/Blackrush/gofus/realm/network/backend"
 	fnetwork "github.com/Blackrush/gofus/realm/network/frontend"
 	"github.com/Blackrush/gofus/shared/db"
@@ -50,7 +51,9 @@ func main() {
 		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", *dbuser, *dbname, *dbpass),
 	})
 
-	bnet := bnetwork.New(bnetwork.Configuration{
+	players := realmdb.NewPlayers(database)
+
+	bnet := bnetwork.New(players, bnetwork.Configuration{
 		ServerId:         *bid,
 		ServerAddr:       *addr,
 		ServerPort:       uint16(*fport),
@@ -62,10 +65,11 @@ func main() {
 	go bnet.Start()
 	defer bnet.Stop()
 
-	fnet := fnetwork.New(database, bnet, fnetwork.Configuration{
+	fnet := fnetwork.New(bnet, players, fnetwork.Configuration{
 		Port:        uint16(*fport),
 		Workers:     *workers,
 		CommunityId: *community,
+		ServerId:    *bid,
 	})
 
 	go fnet.Start()

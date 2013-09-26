@@ -32,16 +32,17 @@ type Service interface {
 
 type context struct {
 	config  Configuration
-	players db.Players
+	players *db.Players
 
 	running      bool
 	conn         net.Conn
 	pendingUsers map[string]*backend.UserInfos // ticket -> user infos
 }
 
-func New(config Configuration) Service {
+func New(players *db.Players, config Configuration) Service {
 	return &context{
 		config:       config,
+		players:      players,
 		pendingUsers: make(map[string]*backend.UserInfos),
 	}
 }

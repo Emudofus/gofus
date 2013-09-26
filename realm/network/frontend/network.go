@@ -2,10 +2,10 @@ package network
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	protocol "github.com/Blackrush/gofus/protocol/frontend"
 	"github.com/Blackrush/gofus/protocol/frontend/msg"
+	"github.com/Blackrush/gofus/realm/db"
 	"github.com/Blackrush/gofus/realm/network/backend"
 	"github.com/Blackrush/gofus/shared"
 	"log"
@@ -23,6 +23,7 @@ type Configuration struct {
 	Port        uint16
 	Workers     int
 	CommunityId int
+	ServerId    uint
 }
 
 type Service interface {
@@ -32,8 +33,8 @@ type Service interface {
 type context struct {
 	config Configuration
 
-	db      *sql.DB
 	backend backend.Service
+	players *db.Players
 
 	running      bool
 	nextClientId <-chan uint64
@@ -41,11 +42,11 @@ type context struct {
 	events       chan event
 }
 
-func New(database *sql.DB, backend backend.Service, config Configuration) Service {
+func New(backend backend.Service, players *db.Players, config Configuration) Service {
 	return &context{
 		config:  config,
-		db:      database,
 		backend: backend,
+		players: players,
 		tasks:   make(chan task, queue_len),
 		events:  make(chan event, queue_len),
 	}

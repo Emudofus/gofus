@@ -47,4 +47,11 @@ func handle_client_regional_version(ctx *context, client *net_client, m *msg.Reg
 }
 
 func handle_client_players(ctx *context, client *net_client, m *msg.PlayersReq) {
+	if players, ok := ctx.players.GetByOwnerId(uint(client.userInfos.Id)); ok {
+		client.Send(&msg.PlayersResp{
+			ServerId:        ctx.config.ServerId,
+			SubscriptionEnd: client.userInfos.SubscriptionEnd,
+			Players:         players,
+		})
+	}
 }
