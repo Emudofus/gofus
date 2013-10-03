@@ -172,7 +172,7 @@ func (msg *RandNameResp) Deserialize(in io.Reader) error {
 	return nil
 }
 
-type CreateUserReq struct {
+type CreatePlayerReq struct {
 	Name   string
 	Breed  int
 	Gender bool
@@ -183,12 +183,12 @@ type CreateUserReq struct {
 	}
 }
 
-func (msg *CreateUserReq) Opcode() string { return "AA" }
-func (msg *CreateUserReq) Serialize(out io.Writer) error {
+func (msg *CreatePlayerReq) Opcode() string { return "AA" }
+func (msg *CreatePlayerReq) Serialize(out io.Writer) error {
 	fmt.Fprintf(out, "%s|%d|%d|%d|%d|%d", msg.Name, msg.Breed, btoi(msg.Gender), msg.Colors.First, msg.Colors.Second, msg.Colors.Third)
 	return nil
 }
-func (msg *CreateUserReq) Deserialize(in io.Reader) error {
+func (msg *CreatePlayerReq) Deserialize(in io.Reader) error {
 	var body string
 	fmt.Fscanf(in, "AA%s", &body)
 

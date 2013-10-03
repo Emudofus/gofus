@@ -215,7 +215,7 @@ func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 		}
 
 		if id, err := res.LastInsertId(); err == nil {
-			player.Id = id
+			player.Id = uint64(id)
 		} else {
 			log.Print(err)
 			return

@@ -3,6 +3,7 @@ package network
 import (
 	protocol "github.com/Blackrush/gofus/protocol/frontend"
 	"github.com/Blackrush/gofus/protocol/frontend/msg"
+	"github.com/Blackrush/gofus/realm/db"
 	"log"
 )
 
@@ -28,6 +29,10 @@ func handle_client_data(ctx *context, client *net_client, arg protocol.MessageCo
 		handle_client_regional_version(ctx, client, m)
 	case *msg.PlayersReq:
 		handle_client_players(ctx, client, m)
+	case *msg.RandNameReq:
+		handle_client_rand_name(ctx, client, m)
+	case *msg.CreatePlayerReq:
+		handle_client_create_player(ctx, client, m)
 	}
 }
 
@@ -47,11 +52,28 @@ func handle_client_regional_version(ctx *context, client *net_client, m *msg.Reg
 }
 
 func handle_client_players(ctx *context, client *net_client, m *msg.PlayersReq) {
-	if players, ok := ctx.players.GetByOwnerId(uint(client.userInfos.Id)); ok {
-		client.Send(&msg.PlayersResp{
-			ServerId:        ctx.config.ServerId,
-			SubscriptionEnd: client.userInfos.SubscriptionEnd,
-			Players:         players,
-		})
+	client_send_player_list(ctx, client)
+}
+
+func handle_client_rand_name(ctx *context, client *net_client, m *msg.RandNameReq) {
+	client.Send(&msg.RandNameResp{Name: "Gofus"})
+}
+
+func handle_client_create_player(ctx *context, client *net_client, m *msg.CreatePlayerReq) {
+	player := &db.Player{
+		OwnerId: uint(client.UserInfos().Id),
+		Name:    m.Name,
+	}
+	player.Appearance.Skin = m.Breed * 10
+	player.Appearance.Colors.First = db.PlayerColor(m.Colors.First)
+	player.Appearance.Colors.Second = db.PlayerColor(m.Colors.Second)
+	player.Appearance.Colors.Third = db.PlayerColor(m.Colors.Third)
+	player.Experience.Level = 1
+	player.Experience.Experience = 0
+
+	if ctx.players.Insert(player) {
+		client_send_player_list(ctx, client)
+	} else {
+		client.Close() // TODO better solution
 	}
 }

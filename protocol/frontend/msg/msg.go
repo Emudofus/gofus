@@ -46,7 +46,7 @@ func init() {
 	producers["Ai"] = func() protocol.MessageContainer { return new(SetIdentity) }
 	producers["AL"] = func() protocol.MessageContainer { return new(PlayersReq) }
 	producers["AP"] = func() protocol.MessageContainer { return new(RandNameReq) }
-	producers["AA"] = func() protocol.MessageContainer { return new(CreateUserReq) }
+	producers["AA"] = func() protocol.MessageContainer { return new(CreatePlayerReq) }
 }
 
 func New(opcode string) (protocol.MessageContainer, bool) {
