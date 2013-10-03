@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 type PlayerExperience struct {
@@ -139,4 +140,27 @@ func (p *Players) rem_player(player *Player) {
 	if players, ok := p.players_by_owner_id[player.OwnerId]; ok {
 		players_remove(&players, player)
 	}
+}
+
+func (p *Players) Insert(player *Player) bool {
+	stmt, err := p.db.Prepare("insert into players(owner_id, name, skin, first_color, second_color, third_color, level, experience) values(?, ?, ?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		log.Print("can't insert player because: ", err)
+		return false
+	}
+
+	res, err := stmt.Exec(player.OwnerId, player.Name, player.Appearance.Skin, player.Appearance.Colors.First, player.Appearance.Colors.Second, player.Appearance.Colors.Third, player.Experience.Level, player.Experience.Experience)
+	if err != nil {
+		log.Print("can't insert player because: ", err)
+		return false
+	}
+
+	if id, err := res.LastInsertId(); err == nil {
+		player.Id = uint64(id)
+	} else {
+		log.Print("can't insert player because: ", err)
+		return false
+	}
+
+	return true
 }

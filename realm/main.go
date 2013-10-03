@@ -7,6 +7,7 @@ import (
 	bnetwork "github.com/Blackrush/gofus/realm/network/backend"
 	fnetwork "github.com/Blackrush/gofus/realm/network/frontend"
 	"github.com/Blackrush/gofus/shared/db"
+	_ "github.com/lib/pq"
 	"os"
 	"os/signal"
 )
@@ -43,8 +44,6 @@ func main() {
 | (___) || (___) || )      | (___) |/\____) |               :_;                 
 (_______)(_______)|/       (_______)\_______) 
 `)
-
-	fmt.Println(*bladdr)
 
 	database := db.Open(&db.Configuration{
 		Driver:         "postgres",
