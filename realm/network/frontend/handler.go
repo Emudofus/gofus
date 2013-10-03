@@ -71,7 +71,7 @@ func handle_client_create_player(ctx *context, client *net_client, m *msg.Create
 	player.Experience.Level = 1
 	player.Experience.Experience = 0
 
-	if ctx.players.Insert(player) {
+	if inserted, success := ctx.players.Persist(player); inserted && success {
 		client_send_player_list(ctx, client)
 	} else {
 		client.Close() // TODO better solution

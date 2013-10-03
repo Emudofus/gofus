@@ -145,7 +145,7 @@ func (p *Players) rem_player(player *Player) {
 }
 
 func player_values(player *Player, with_id, id_last bool) []interface{} {
-	result := []interface{}
+	var result []interface{}
 	if with_id && !id_last {
 		result = append(result, player.Id)
 	}
@@ -187,7 +187,7 @@ func (p *Players) FindAll() ([]*Player, bool) {
 		return nil, false
 	}
 
-	result := []*Player{}
+	var result []*Player
 	for rows.Next() {
 		player := &Player{persisted: true}
 		if err := rows.Scan(player_ptrvalues(player)); err != nil {
