@@ -97,7 +97,7 @@ func NewPlayers(db *sql.DB) *Players {
 	p := &Players{
 		db:                  db,
 		players:             nil,
-		players_by_owner_id: nil,
+		players_by_owner_id: make(map[uint][]*Player),
 	}
 
 	if players, success := p.find_all(); success {
@@ -121,8 +121,11 @@ func (p *Players) GetById(id uint64) (*Player, bool) {
 }
 
 func (p *Players) GetByOwnerId(ownerId uint) ([]*Player, bool) {
-	player, ok := p.players_by_owner_id[ownerId]
-	return player, ok
+	players, ok := p.players_by_owner_id[ownerId]
+
+	cpy := make([]*Player, 0, len(players))
+	copy(cpy, players)
+	return cpy, ok
 }
 
 func players_index_of(players []*Player, player *Player) (int, bool) {
@@ -147,19 +150,17 @@ func players_remove(players *[]*Player, player *Player) (ok bool) {
 func (p *Players) add_player(player *Player) {
 	p.players = append(p.players, player)
 
-	var players []*Player
-	var ok bool
-	if players, ok = p.players_by_owner_id[player.OwnerId]; !ok {
-		players = make([]*Player, 0, 10)
-	}
+	players, _ = p.players_by_owner_id[player.OwnerId]
 	players = append(players, player)
 	p.players_by_owner_id[player.OwnerId] = players
 }
 
 func (p *Players) rem_player(player *Player) {
 	players_remove(&p.players, player)
+	
 	if players, ok := p.players_by_owner_id[player.OwnerId]; ok {
 		players_remove(&players, player)
+		p.players_by_owner_id[player.OwnerId] = players
 	}
 }
 
@@ -169,7 +170,6 @@ func player_values(player *Player, with_id, id_last bool) []interface{} {
 		result = append(result, player.Id)
 	}
 	result = append(result,
-		player.Id,
 		player.OwnerId,
 		player.Name,
 		player.Appearance.Skin,
@@ -209,7 +209,7 @@ func (p *Players) find_all() ([]*Player, bool) {
 	var result []*Player
 	for rows.Next() {
 		player := &Player{persisted: true}
-		if err := rows.Scan(player_ptrvalues(player)); err != nil {
+		if err := rows.Scan(player_ptrvalues(player)...); err != nil {
 			log.Print(err)
 			return nil, false
 		}
@@ -221,39 +221,37 @@ func (p *Players) find_all() ([]*Player, bool) {
 
 func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 	if !player.persisted {
-		stmt, err := p.db.Prepare("insert into players(owner_id, name, skin, first_color, second_color, third_color, level, experience) values($1, $2, $3, $4, $5, $6, $7, $8")
-		defer stmt.Close()
+		stmt, err := p.db.Prepare("insert into players(owner_id, name, skin, first_color, second_color, third_color, level, experience) values($1, $2, $3, $4, $5, $6, $7, $8) returning id;")
+		//defer stmt.Close()
 
 		if err != nil {
 			log.Print(err)
 			return
 		}
 
-		res, err := stmt.Exec(player_values(player, false, false))
-		if err != nil {
-			log.Print(err)
-			return
-		}
+		res := stmt.QueryRow(player_values(player, false, false)...)
 
-		if id, err := res.LastInsertId(); err == nil {
-			player.Id = uint64(id)
+		var id uint64
+		if err := res.Scan(&id); err == nil {
+			player.Id = id
 		} else {
 			log.Print(err)
 			return
 		}
 
 		player.persisted = true
+		p.add_player(player)
 		inserted = true
 	} else {
 		stmt, err := p.db.Prepare("update players set owner_id=$1, name=$2, skin=$3, first_color=$4, second_color=$5, third_color=$6, level=$7, experience=$8 where id=$9")
-		defer stmt.Close()
+		//defer stmt.Close()
 
 		if err != nil {
 			log.Print(err)
 			return
 		}
 
-		if _, err := stmt.Exec(player_values(player, true, true)); err != nil {
+		if _, err := stmt.Exec(player_values(player, true, true)...); err != nil {
 			log.Print(err)
 			return
 		}
