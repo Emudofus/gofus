@@ -94,11 +94,30 @@ type Players struct {
 }
 
 func NewPlayers(db *sql.DB) *Players {
-	return &Players{
+	p := &Players{
 		db:                  db,
-		players:             make([]*Player, 0, 10),
-		players_by_owner_id: make(map[uint][]*Player),
+		players:             nil,
+		players_by_owner_id: nil,
 	}
+
+	if players, success := p.find_all(); success {
+		for _, player := range players {
+			p.add_player(player)
+		}
+	} else {
+		panic("can't load player repository")
+	}
+
+	return p
+}
+
+func (p *Players) GetById(id uint64) (*Player, bool) {
+	for _, player := range p.players {
+		if player.Id == id {
+			return player, true
+		}
+	}
+	return nil, false
 }
 
 func (p *Players) GetByOwnerId(ownerId uint) ([]*Player, bool) {
@@ -180,7 +199,7 @@ func player_ptrvalues(player *Player) []interface{} {
 	}
 }
 
-func (p *Players) FindAll() ([]*Player, bool) {
+func (p *Players) find_all() ([]*Player, bool) {
 	rows, err := p.db.Query("select id, owner_id, name, skin, first_color, second_color, third_color, level, experience from players")
 	if err != nil {
 		log.Print(err)
@@ -203,6 +222,8 @@ func (p *Players) FindAll() ([]*Player, bool) {
 func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 	if !player.persisted {
 		stmt, err := p.db.Prepare("insert into players(owner_id, name, skin, first_color, second_color, third_color, level, experience) values($1, $2, $3, $4, $5, $6, $7, $8")
+		defer stmt.Close()
+
 		if err != nil {
 			log.Print(err)
 			return
@@ -225,6 +246,8 @@ func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 		inserted = true
 	} else {
 		stmt, err := p.db.Prepare("update players set owner_id=$1, name=$2, skin=$3, first_color=$4, second_color=$5, third_color=$6, level=$7, experience=$8 where id=$9")
+		defer stmt.Close()
+
 		if err != nil {
 			log.Print(err)
 			return
@@ -246,7 +269,12 @@ func (p *Players) Remove(player *Player) (success bool) {
 	}
 
 	if stmt, err := p.db.Prepare("delete from players where id=$1"); err == nil {
+		defer stmt.Close()
+
 		if _, err := stmt.Exec(player.Id); err == nil {
+			player.persisted = false
+			p.rem_player(player)
+
 			return true
 		} else {
 			log.Print(err)

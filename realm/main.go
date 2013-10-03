@@ -33,6 +33,14 @@ func wait_for_input() <-chan os.Signal {
 	return c
 }
 
+func maybe_empty(str *string) string {
+	if str == nil || len(*str) <= 0 {
+		return "''"
+	} else {
+		return *str
+	}
+}
+
 func main() {
 	flag.Parse()
 	fmt.Println(` _______  _______  _______           _______           .-.        .-.           
@@ -47,8 +55,9 @@ func main() {
 
 	database := db.Open(&db.Configuration{
 		Driver:         "postgres",
-		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", *dbuser, *dbname, *dbpass),
+		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", maybe_empty(dbuser), maybe_empty(dbname), maybe_empty(dbpass)),
 	})
+	defer database.Close()
 
 	players := realmdb.NewPlayers(database)
 
