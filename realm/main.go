@@ -12,33 +12,10 @@ import (
 	"os/signal"
 )
 
-var (
-	fport      = flag.Int("fport", 5556, "the port the frontend server will listen on")
-	bid        = flag.Uint("id", 1, "the id of the realm server")
-	addr       = flag.String("addr", "127.0.0.1", "the address of the realm server")
-	completion = flag.Int("completion", 0, "the completion of the realm server")
-	community  = flag.Int("community", 0, "the community id of the realm server")
-	bladdr     = flag.String("bladdr", ":5554", "the address and port the backend service will connect to")
-	bpass      = flag.String("bpass", "", "the password used to secure backend service")
-	workers    = flag.Int("workers", 1, "the number of workers to spawn")
-
-	dbuser = flag.String("dbuser", "postgres", "the username used to connect to the PostgreSQL database")
-	dbname = flag.String("dbname", "gofus", "the name of the PostgreSQL database")
-	dbpass = flag.String("dbpass", "", "the password used to connect to the PostgreSQL database")
-)
-
 func wait_for_input() <-chan os.Signal {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Kill, os.Interrupt)
 	return c
-}
-
-func maybe_empty(str *string) string {
-	if str == nil || len(*str) <= 0 {
-		return "''"
-	} else {
-		return *str
-	}
 }
 
 func main() {
@@ -52,33 +29,19 @@ func main() {
 | (___) || (___) || )      | (___) |/\____) |               :_;                 
 (_______)(_______)|/       (_______)\_______) 
 `)
+	cfg := load_config()
 
-	database := db.Open(&db.Configuration{
-		Driver:         "postgres",
-		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", maybe_empty(dbuser), maybe_empty(dbname), maybe_empty(dbpass)),
-	})
+	database := db.Open(&cfg.Database)
 	defer database.Close()
 
 	players := realmdb.NewPlayers(database)
 
-	bnet := bnetwork.New(players, bnetwork.Configuration{
-		ServerId:         *bid,
-		ServerAddr:       *addr,
-		ServerPort:       uint16(*fport),
-		ServerCompletion: *completion,
-		Laddr:            *bladdr,
-		Password:         *bpass,
-	})
+	bnet := bnetwork.New(players, cfg.Backend)
 
 	go bnet.Start()
 	defer bnet.Stop()
 
-	fnet := fnetwork.New(bnet, players, fnetwork.Configuration{
-		Port:        uint16(*fport),
-		Workers:     *workers,
-		CommunityId: *community,
-		ServerId:    *bid,
-	})
+	fnet := fnetwork.New(bnet, players, cfg.Frontend)
 
 	go fnet.Start()
 	defer fnet.Stop()
