@@ -203,3 +203,23 @@ func (msg *CreatePlayerReq) Deserialize(in io.Reader) error {
 
 	return nil
 }
+
+type CreatePlayerErrorResp struct{}
+
+func (msg *CreatePlayerErrorResp) Opcode() string                 { return "AAE" }
+func (msg *CreatePlayerErrorResp) Serialize(out io.Writer) error  { return nil }
+func (msg *CreatePlayerErrorResp) Deserialize(in io.Reader) error { return nil }
+
+type PlayerSelectionReq struct {
+	PlayerId int
+}
+
+func (msg *PlayerSelectionReq) Opcode() string { return "AS" }
+func (msg *PlayerSelectionReq) Serialize(out io.Writer) error {
+	fmt.Fprintf(out, "AS%d", msg.PlayerId)
+	return nil
+}
+func (msg *PlayerSelectionReq) Deserialize(in io.Reader) error {
+	fmt.Fscanf(in, "AS%d", &msg.PlayerId)
+	return nil
+}

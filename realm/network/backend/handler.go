@@ -54,7 +54,7 @@ func client_handle_user_players(ctx *context, msg *backend.UserPlayersReqMsg) {
 	go func() { // make it async, think of other poor players waiting :-(
 		var players uint8
 
-		if p, ok := ctx.players.GetByOwnerId(uint(msg.UserId)); ok {
+		if p, ok := ctx.players.GetByOwnerId(1); ok {
 			players = uint8(len(p))
 		} else {
 			players = 0

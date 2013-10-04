@@ -24,7 +24,7 @@ type PlayerAccessory int
 
 func (accessory PlayerAccessory) String() string {
 	if int(accessory) != -1 {
-		return fmt.Sprintf("%x", accessory)
+		return fmt.Sprintf("%x", int(accessory))
 	}
 	return ""
 }
@@ -63,7 +63,7 @@ func (a *PlayerAccessories) SetShield(id int) {
 }
 
 func (a PlayerAccessories) String() string {
-	return fmt.Sprintf("%s,%s,%s,%s,%s", a[0], a[1], a[2], a[3], a[4])
+	return fmt.Sprintf("%v,%v,%v,%v,%v", a[0], a[1], a[2], a[3], a[4])
 }
 
 type PlayerAppearance struct {
@@ -90,7 +90,21 @@ type Players struct {
 	db *sql.DB
 
 	players             []*Player
-	players_by_owner_id map[uint][]*Player
+	players_by_owner_id playersByOwnerId
+}
+
+type playersByOwnerId map[uint][]*Player
+
+func (p *playersByOwnerId) add_player(player *Player) {
+	players, _ := (*p)[player.OwnerId]
+	(*p)[player.OwnerId] = append(players, player)
+}
+
+func (p *playersByOwnerId) rem_player(player *Player) {
+	players, _ := (*p)[player.OwnerId]
+	if players_remove(&players, player) {
+		(*p)[player.OwnerId] = players
+	}
 }
 
 func NewPlayers(db *sql.DB) *Players {
@@ -108,6 +122,8 @@ func NewPlayers(db *sql.DB) *Players {
 		panic("can't load player repository")
 	}
 
+	log.Printf("[database] %d players loaded", len(p.players))
+
 	return p
 }
 
@@ -122,10 +138,7 @@ func (p *Players) GetById(id uint64) (*Player, bool) {
 
 func (p *Players) GetByOwnerId(ownerId uint) ([]*Player, bool) {
 	players, ok := p.players_by_owner_id[ownerId]
-
-	cpy := make([]*Player, 0, len(players))
-	copy(cpy, players)
-	return cpy, ok
+	return players, ok
 }
 
 func players_index_of(players []*Player, player *Player) (int, bool) {
@@ -149,19 +162,12 @@ func players_remove(players *[]*Player, player *Player) (ok bool) {
 
 func (p *Players) add_player(player *Player) {
 	p.players = append(p.players, player)
-
-	players, _ = p.players_by_owner_id[player.OwnerId]
-	players = append(players, player)
-	p.players_by_owner_id[player.OwnerId] = players
+	p.players_by_owner_id.add_player(player)
 }
 
 func (p *Players) rem_player(player *Player) {
 	players_remove(&p.players, player)
-	
-	if players, ok := p.players_by_owner_id[player.OwnerId]; ok {
-		players_remove(&players, player)
-		p.players_by_owner_id[player.OwnerId] = players
-	}
+	p.players_by_owner_id.rem_player(player)
 }
 
 func player_values(player *Player, with_id, id_last bool) []interface{} {
@@ -229,7 +235,20 @@ func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 			return
 		}
 
-		res := stmt.QueryRow(player_values(player, false, false)...)
+		res, err := stmt.Query(player_values(player, false, false)...)
+
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		if res.Err() != nil {
+			log.Print(err.Error())
+			return
+		}
+		if !res.Next() {
+			log.Print("the database did not returned any values")
+			return
+		}
 
 		var id uint64
 		if err := res.Scan(&id); err == nil {

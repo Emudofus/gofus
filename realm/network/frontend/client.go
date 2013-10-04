@@ -82,7 +82,7 @@ func (client *net_client) SetUserInfos(userInfos backend.UserInfos) {
 func client_send_player_list(ctx *context, client *net_client) {
 	var players []*db.Player
 	var ok bool
-	if players, ok = ctx.players.GetByOwnerId(uint(client.userInfos.Id)); ok {
+	if players, ok = ctx.players.GetByOwnerId(uint(client.userInfos.Id)); !ok {
 		players = make([]*db.Player, 0, 0)
 	}
 
