@@ -12,29 +12,10 @@ import (
 	"os/signal"
 )
 
-var (
-	fport   = flag.Int("fport", 5555, "the port the frontend server will listen on")
-	bport   = flag.Int("bport", 5554, "the port the backend server will listen on")
-	bpass   = flag.String("bpass", "", "the password used to secure the backend server")
-	workers = flag.Int("workers", 1, "the number of workers to start")
-
-	dbuser = flag.String("dbuser", "postgres", "the username used to connect to the PostgreSQL database")
-	dbname = flag.String("dbname", "gofus", "the name of the PostgreSQL database")
-	dbpass = flag.String("dbpass", "", "the password used to connect to the PostgreSQL database")
-)
-
 func wait_user_input() <-chan os.Signal {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Kill, os.Interrupt)
 	return sig
-}
-
-func maybe_empty(str *string) string {
-	if str == nil || len(*str) <= 0 {
-		return "''"
-	} else {
-		return *str
-	}
 }
 
 func main() {
@@ -48,11 +29,9 @@ func main() {
 | (___) || (___) || )      | (___) |/\____) |               :_;                 
 (_______)(_______)|/       (_______)\_______) 
 `)
+	cfg := load_config()
 
-	database := db.Open(&db.Configuration{
-		Driver:         "postgres",
-		DataSourceName: fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", maybe_empty(dbuser), maybe_empty(dbname), maybe_empty(dbpass)),
-	})
+	database := db.Open(&cfg.Database)
 	defer database.Close()
 
 	users := &logindb.Users{database}
@@ -60,18 +39,12 @@ func main() {
 		panic(err)
 	}
 
-	bnet := bnetwork.New(users, bnetwork.Configuration{
-		Port:     uint16(*bport),
-		Password: *bpass,
-	})
+	bnet := bnetwork.New(users, cfg.Backend)
 
 	go bnet.Start()
 	defer bnet.Stop()
 
-	fnet := fnetwork.New(users, bnet, fnetwork.Configuration{
-		Port:    uint16(*fport),
-		Workers: *workers,
-	})
+	fnet := fnetwork.New(users, bnet, cfg.Frontend)
 
 	go fnet.Start()
 	defer fnet.Stop()

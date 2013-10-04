@@ -1,0 +1,14 @@
+{
+  "Database": {
+    "Driver": "postgres",
+    "DataSourceName": "user=postgres dbname=gofus password='' sslmode=disable"
+  },
+  "Backend": {
+    "Port": 5554,
+    "Password": ""
+  },
+  "Frontend": {
+    "Port": 5555,
+    "Workers": 1
+  }
+}
