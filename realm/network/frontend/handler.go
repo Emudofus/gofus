@@ -1,4 +1,4 @@
-package network
+package frontend
 
 import (
 	"github.com/Blackrush/gofus/protocol/backend"
