@@ -133,7 +133,13 @@ type PlayersResp struct {
 
 func (msg *PlayersResp) Opcode() string { return "ALK" }
 func (msg *PlayersResp) Serialize(out io.Writer) error {
-	fmt.Fprintf(out, "%d|%d", msg.SubscriptionEnd.Sub(time.Now()).Nanoseconds()/1e6, len(msg.Players))
+	var remainingSubscription int64
+	diff := msg.SubscriptionEnd.Sub(time.Now())
+	if diff.Nanoseconds() > 0 {
+		remainingSubscription = diff.Nanoseconds() / 1e6
+	}
+
+	fmt.Fprintf(out, "%d|%d", remainingSubscription, len(msg.Players))
 	for _, player := range msg.Players {
 		fmt.Fprintf(out, "|%d;%s;%d;%d;%d;%d;%d;%s;%d;;;",
 			player.Id,

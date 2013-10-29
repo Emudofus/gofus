@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	realmdb "github.com/Blackrush/gofus/realm/db"
 	"github.com/Blackrush/gofus/realm/network/backend"
 	"github.com/Blackrush/gofus/realm/network/frontend"
 	"github.com/Blackrush/gofus/shared/db"
@@ -28,13 +29,16 @@ var (
 	completion = flag.Int("completion", invalid_int_flag, "the completion of the realm server")
 	community  = flag.Int("community", invalid_int_flag, "the community id of the realm server")
 
-	data_source_name = flag.String("dsn", invalid_string_flag, "the source parameters used to connect to the PostgreSQL database")
+	data_source_name        = flag.String("dsn", invalid_string_flag, "the source parameters used to connect to the PostgreSQL database")
+	static_data_source_name = flag.String("sdsn", invalid_string_flag, "the source parameters used to connect to the PostgreSQL static database")
 )
 
 type config struct {
-	Database db.Configuration
-	Backend  backend.Configuration
-	Frontend frontend.Configuration
+	Database       db.Configuration
+	StaticDatabase db.Configuration
+	Backend        backend.Configuration
+	Frontend       frontend.Configuration
+	Players        realmdb.PlayersConfig
 }
 
 func set_default_config_values(cfg *config) {
@@ -42,25 +46,36 @@ func set_default_config_values(cfg *config) {
 		Driver:         "postgres",
 		DataSourceName: "user=postgres dbname=gofus password='' sslmode=disable",
 	}
+	cfg.StaticDatabase = db.Configuration{
+		Driver:         "postgres",
+		DataSourceName: "user=postgres dbname=gofus_static password='' sslmode=disable",
+	}
 	cfg.Backend = backend.Configuration{
 		ServerId:         1,
 		ServerAddr:       "127.0.0.1",
-		ServerPort:       5555,
+		ServerPort:       5556,
 		ServerCompletion: 0,
 		Laddr:            ":5554",
 		Password:         "",
 	}
 	cfg.Frontend = frontend.Configuration{
-		Port:        5555,
+		Port:        5556,
 		Workers:     1,
-		CommunityId: 1,
+		CommunityId: 0,
 		ServerId:    1,
+	}
+	cfg.Players = realmdb.PlayersConfig{
+		StartMap:  7411,
+		StartCell: 355,
 	}
 }
 
 func overwrite_config_values(cfg *config) {
 	if *data_source_name != invalid_string_flag {
 		cfg.Database.DataSourceName = *data_source_name
+	}
+	if *static_data_source_name != invalid_string_flag {
+		cfg.StaticDatabase.DataSourceName = *static_data_source_name
 	}
 	if *fport != invalid_int_flag {
 		cfg.Frontend.Port = uint16(*fport)

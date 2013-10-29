@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	realmdb "github.com/Blackrush/gofus/realm/db"
+	staticdb "github.com/Blackrush/gofus/realm/db/static"
 	bnetwork "github.com/Blackrush/gofus/realm/network/backend"
 	fnetwork "github.com/Blackrush/gofus/realm/network/frontend"
 	"github.com/Blackrush/gofus/shared/db"
@@ -31,10 +32,17 @@ func main() {
 `)
 	cfg := load_config()
 
+	staticDb := db.Open(&cfg.StaticDatabase)
+	defer staticDb.Close()
+
+	maps := staticdb.NewMaps(staticDb)
+	maps.Load()
+
 	database := db.Open(&cfg.Database)
 	defer database.Close()
 
-	players := realmdb.NewPlayers(database)
+	players := realmdb.NewPlayers(database, cfg.Players, maps)
+	players.Load()
 
 	bnet := bnetwork.New(players, cfg.Backend)
 

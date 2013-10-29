@@ -139,9 +139,13 @@ func (msg *SetRealmServerPlayers) Serialize(out io.Writer) error {
 		values[i] = players
 	}
 
-	sub := uint64(msg.SubscriptionEnd.Sub(time.Now()).Nanoseconds()) / 1e6
+	var remainingSubscription int64
+	diff := msg.SubscriptionEnd.Sub(time.Now())
+	if diff.Nanoseconds() > 0 {
+		remainingSubscription = diff.Nanoseconds() / 1e6
+	}
 
-	fmt.Fprint(out, sub, "|", types.NewMultipleFormatter("|", values...))
+	fmt.Fprint(out, remainingSubscription, "|", types.NewMultipleFormatter("|", values...))
 
 	return nil
 }

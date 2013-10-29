@@ -3,18 +3,26 @@
     "Driver": "postgres",
     "DataSourceName": "user=postgres dbname=gofus password='' sslmode=disable"
   },
+  "StaticDatabase": {
+    "Driver": "postgres",
+    "DataSourceName": "user=postgres dbname=gofus_static password='' sslmode=disable"
+  },
   "Backend": {
     "ServerId": 1,
     "ServerAddr": "127.0.0.1",
-    "ServerPort": 5555,
+    "ServerPort": 5556,
     "ServerCompletion": 0,
     "Laddr": ":5554",
     "Password": ""
   },
   "Frontend": {
-    "Port": 5555,
+    "Port": 5556,
     "Workers": 1,
-    "CommunityId": 1,
+    "CommunityId": 0,
     "ServerId": 1
+  },
+  "Players": {
+    "StartMap": 7411,
+    "StartCell": 355
   }
 }

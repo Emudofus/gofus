@@ -1,10 +1,8 @@
 package frontend
 
 import (
-	"github.com/Blackrush/gofus/protocol/backend"
 	protocol "github.com/Blackrush/gofus/protocol/frontend"
 	"github.com/Blackrush/gofus/protocol/frontend/msg"
-	"github.com/Blackrush/gofus/realm/db"
 	"log"
 )
 
@@ -62,27 +60,8 @@ func handle_client_rand_name(ctx *context, client *net_client, m *msg.RandNameRe
 	client.Send(&msg.RandNameResp{Name: "Gofus"})
 }
 
-func create_default_player(user *backend.UserInfos, m *msg.CreatePlayerReq) *db.Player {
-	player := &db.Player{
-		OwnerId: uint(user.Id),
-		Name:    m.Name,
-	}
-
-	player.Appearance.Skin = m.Breed * 10
-	player.Appearance.Colors.First = db.PlayerColor(m.Colors.First)
-	player.Appearance.Colors.Second = db.PlayerColor(m.Colors.Second)
-	player.Appearance.Colors.Third = db.PlayerColor(m.Colors.Third)
-
-	player.Experience = db.PlayerExperience{
-		Level:      1,
-		Experience: 0,
-	}
-
-	return player
-}
-
 func handle_client_create_player(ctx *context, client *net_client, m *msg.CreatePlayerReq) {
-	player := create_default_player(client.UserInfos(), m)
+	player := ctx.players.NewPlayer(uint(client.UserInfos().Id), m.Name, m.Breed, m.Colors.First, m.Colors.Second, m.Colors.Third)
 
 	if inserted, success := ctx.players.Persist(player); inserted && success {
 		client_send_player_list(ctx, client)

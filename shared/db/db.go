@@ -15,10 +15,12 @@ func Open(config *Configuration) (db *sql.DB) {
 	if err != nil {
 		panic(err.Error())
 	}
-	if err = db.Ping(); err != nil {
-		panic(err.Error())
+
+	var dbname string
+	if err = db.QueryRow("select current_database()").Scan(&dbname); err != nil {
+		panic(err)
 	}
 
-	log.Print("[database] successfully opened")
+	log.Print("[database] `", dbname, "` successfully opened")
 	return
 }
