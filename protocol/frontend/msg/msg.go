@@ -48,6 +48,7 @@ func init() {
 	producers["AP"] = func() protocol.MessageContainer { return new(RandNameReq) }
 	producers["AA"] = func() protocol.MessageContainer { return new(CreatePlayerReq) }
 	producers["AS"] = func() protocol.MessageContainer { return new(PlayerSelectionReq) }
+	producers["GC"] = func() protocol.MessageContainer { return new(GameContextCreateReq) }
 }
 
 func New(opcode string) (protocol.MessageContainer, bool) {

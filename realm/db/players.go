@@ -86,6 +86,8 @@ type Player struct {
 	Id         uint64
 	OwnerId    uint
 	Name       string
+	Breed      int
+	Gender     bool
 	Appearance PlayerAppearance
 	Experience PlayerExperience
 	Position   PlayerPosition
@@ -198,6 +200,8 @@ func player_values(player *Player, with_id, id_last bool) []interface{} {
 	result = append(result,
 		player.OwnerId,
 		player.Name,
+		player.Breed,
+		player.Gender,
 		player.Appearance.Skin,
 		player.Appearance.Colors.First,
 		player.Appearance.Colors.Second,
@@ -218,6 +222,8 @@ func player_ptrvalues(player *Player) []interface{} {
 		&player.Id,
 		&player.OwnerId,
 		&player.Name,
+		&player.Breed,
+		&player.Gender,
 		&player.Appearance.Skin,
 		&player.Appearance.Colors.First,
 		&player.Appearance.Colors.Second,
@@ -228,7 +234,7 @@ func player_ptrvalues(player *Player) []interface{} {
 }
 
 func (p *Players) find_all() ([]*Player, bool) {
-	rows, err := p.db.Query("select id, owner_id, name, skin, first_color, second_color, third_color, level, experience, current_map, current_cell from players")
+	rows, err := p.db.Query("select id, owner_id, name, breed, gender, skin, first_color, second_color, third_color, level, experience, current_map, current_cell from players")
 	if err != nil {
 		log.Print(err)
 		return nil, false
@@ -259,13 +265,19 @@ func (p *Players) find_all() ([]*Player, bool) {
 	return result, true
 }
 
-func (p *Players) NewPlayer(userId uint, name string, breed int, firstColor, secondColor, thirdColor int) *Player {
+func (p *Players) NewPlayer(userId uint, name string, breed int, gender bool, firstColor, secondColor, thirdColor int) *Player {
 	player := &Player{
 		OwnerId: userId,
 		Name:    name,
+		Breed:   breed,
+		Gender:  gender,
 	}
 
 	player.Appearance.Skin = breed * 10
+	if gender {
+		player.Appearance.Skin += 1
+	}
+
 	player.Appearance.Colors.First = PlayerColor(firstColor)
 	player.Appearance.Colors.Second = PlayerColor(secondColor)
 	player.Appearance.Colors.Third = PlayerColor(thirdColor)
@@ -285,7 +297,7 @@ func (p *Players) NewPlayer(userId uint, name string, breed int, firstColor, sec
 
 func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 	if !player.persisted {
-		stmt, err := p.db.Prepare("insert into players(owner_id, name, skin, first_color, second_color, third_color, level, experience, current_map, current_cell) values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id;")
+		stmt, err := p.db.Prepare("insert into players(owner_id, name, breed, gender, skin, first_color, second_color, third_color, level, experience, current_map, current_cell) values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) returning id;")
 		//defer stmt.Close()
 
 		if err != nil {
@@ -320,7 +332,7 @@ func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 		p.add_player(player)
 		inserted = true
 	} else {
-		stmt, err := p.db.Prepare("update players set owner_id=$1, name=$2, skin=$3, first_color=$4, second_color=$5, third_color=$6, level=$7, experience=$8, current_map=$9, current_cell=$10 where id=$11")
+		stmt, err := p.db.Prepare("update players set owner_id=$1, name=$2, breed=$3, gender=$4, skin=$5, first_color=$6, second_color=$7, third_color=$8, level=$9, experience=$10, current_map=$11, current_cell=$12 where id=$13")
 		//defer stmt.Close()
 
 		if err != nil {

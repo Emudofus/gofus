@@ -20,6 +20,8 @@ type Client interface {
 	Id() uint64
 	UserInfos() *backend.UserInfos
 	SetUserInfos(userInfos backend.UserInfos)
+	Player() *db.Player
+	SetPlayer(player *db.Player)
 }
 
 type net_client struct {
@@ -28,6 +30,7 @@ type net_client struct {
 
 	id        uint64
 	userInfos *backend.UserInfos
+	player    *db.Player
 }
 
 func new_net_client(conn net.Conn, id uint64) *net_client {
@@ -77,6 +80,14 @@ func (client *net_client) UserInfos() *backend.UserInfos {
 
 func (client *net_client) SetUserInfos(userInfos backend.UserInfos) {
 	client.userInfos = &userInfos
+}
+
+func (client *net_client) Player() *db.Player {
+	return client.player
+}
+
+func (client *net_client) SetPlayer(player *db.Player) {
+	client.player = player
 }
 
 func client_send_player_list(ctx *context, client *net_client) {

@@ -34,6 +34,8 @@ func handle_client_data(ctx *context, client *net_client, arg protocol.MessageCo
 		handle_client_create_player(ctx, client, m)
 	case *msg.PlayerSelectionReq:
 		handle_client_player_selection(ctx, client, m)
+	case *msg.GameContextCreateReq:
+		handle_client_game_context_create(ctx, client, m)
 	}
 }
 
@@ -61,7 +63,7 @@ func handle_client_rand_name(ctx *context, client *net_client, m *msg.RandNameRe
 }
 
 func handle_client_create_player(ctx *context, client *net_client, m *msg.CreatePlayerReq) {
-	player := ctx.players.NewPlayer(uint(client.UserInfos().Id), m.Name, m.Breed, m.Colors.First, m.Colors.Second, m.Colors.Third)
+	player := ctx.players.NewPlayer(uint(client.UserInfos().Id), m.Name, m.Breed, m.Gender, m.Colors.First, m.Colors.Second, m.Colors.Third)
 
 	if inserted, success := ctx.players.Persist(player); inserted && success {
 		client_send_player_list(ctx, client)
@@ -71,5 +73,16 @@ func handle_client_create_player(ctx *context, client *net_client, m *msg.Create
 }
 
 func handle_client_player_selection(ctx *context, client *net_client, m *msg.PlayerSelectionReq) {
+	player, ok := ctx.players.GetById(m.PlayerId)
+	if !ok {
+		client.CloseWith(&msg.PlayerSelectionErrorResp{})
+		return
+	}
 
+	client.SetPlayer(player)
+	client.Send(&msg.PlayerSelectionResp{player})
+}
+
+func handle_client_game_context_create(ctx *context, client *net_client, m *msg.GameContextCreateReq) {
+	log.Print("YOSH")
 }

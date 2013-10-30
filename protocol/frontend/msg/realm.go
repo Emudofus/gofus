@@ -141,7 +141,7 @@ func (msg *PlayersResp) Serialize(out io.Writer) error {
 
 	fmt.Fprintf(out, "%d|%d", remainingSubscription, len(msg.Players))
 	for _, player := range msg.Players {
-		fmt.Fprintf(out, "|%d;%s;%d;%d;%d;%d;%d;%s;%d;;;",
+		fmt.Fprintf(out, "|%d;%s;%d;%d;%v;%v;%v;%s;%d;;;",
 			player.Id,
 			player.Name,
 			player.Experience.Level,
@@ -217,15 +217,70 @@ func (msg *CreatePlayerErrorResp) Serialize(out io.Writer) error  { return nil }
 func (msg *CreatePlayerErrorResp) Deserialize(in io.Reader) error { return nil }
 
 type PlayerSelectionReq struct {
-	PlayerId int
+	PlayerId uint64
 }
 
 func (msg *PlayerSelectionReq) Opcode() string { return "AS" }
 func (msg *PlayerSelectionReq) Serialize(out io.Writer) error {
-	fmt.Fprintf(out, "AS%d", msg.PlayerId)
+	fmt.Fprintf(out, "%d", msg.PlayerId)
 	return nil
 }
 func (msg *PlayerSelectionReq) Deserialize(in io.Reader) error {
 	fmt.Fscanf(in, "AS%d", &msg.PlayerId)
+	return nil
+}
+
+type PlayerSelectionErrorResp struct{}
+
+func (msg *PlayerSelectionErrorResp) Opcode() string                 { return "AAE" }
+func (msg *PlayerSelectionErrorResp) Serialize(out io.Writer) error  { return nil }
+func (msg *PlayerSelectionErrorResp) Deserialize(in io.Reader) error { return nil }
+
+type PlayerSelectionResp struct {
+	Player *db.Player
+	// TODO items
+}
+
+func (msg *PlayerSelectionResp) Opcode() string { return "ASK" }
+
+func (msg *PlayerSelectionResp) Serialize(out io.Writer) error {
+	fmt.Fprintf(out, "|%d|%s|%d|%d|%d|%d|%v|%v|%v|",
+		msg.Player.Id,
+		msg.Player.Name,
+		msg.Player.Experience.Level,
+		msg.Player.Breed,
+		btoi(msg.Player.Gender),
+		msg.Player.Appearance.Skin,
+		msg.Player.Appearance.Colors.First,
+		msg.Player.Appearance.Colors.Second,
+		msg.Player.Appearance.Colors.Third,
+		// TODO send items
+	)
+	return nil
+}
+
+func (msg *PlayerSelectionResp) Deserialize(in io.Reader) error { return nil }
+
+type ContextType int
+
+const (
+	InvalidContextType ContextType = iota
+	SoloContextType
+	FightContextType
+)
+
+type GameContextCreateReq struct {
+	Type ContextType
+}
+
+func (msg *GameContextCreateReq) Opcode() string { return "GC" }
+
+func (msg *GameContextCreateReq) Serialize(out io.Writer) error {
+	fmt.Fprintf(out, "%d", int(msg.Type))
+	return nil
+}
+
+func (msg *GameContextCreateReq) Deserialize(in io.Reader) error {
+	fmt.Fscanf(in, "GC%d", &msg.Type)
 	return nil
 }
