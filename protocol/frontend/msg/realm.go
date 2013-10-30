@@ -284,3 +284,25 @@ func (msg *GameContextCreateReq) Deserialize(in io.Reader) error {
 	fmt.Fscanf(in, "GC%d", &msg.Type)
 	return nil
 }
+
+type GameContextCreateResp struct {
+	Type ContextType
+}
+
+func (msg *GameContextCreateResp) Opcode() string { return "GCK" }
+
+func (msg *GameContextCreateResp) Serialize(out io.Writer) error {
+	fmt.Fprintf(out, "|%d|", int(msg.Type))
+	return nil
+}
+
+func (msg *GameContextCreateResp) Deserialize(in io.Reader) error {
+	fmt.Fscanf(in, "GCK|%d|", &msg.Type)
+	return nil
+}
+
+type GameContextCreateErrorResp struct{}
+
+func (msg *GameContextCreateErrorResp) Opcode() string                 { return "GCE" }
+func (msg *GameContextCreateErrorResp) Serialize(out io.Writer) error  { return nil }
+func (msg *GameContextCreateErrorResp) Deserialize(in io.Reader) error { return nil }

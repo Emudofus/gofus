@@ -3,7 +3,6 @@ package handler
 import (
 	protocol "github.com/Blackrush/gofus/protocol/frontend"
 	"github.com/Blackrush/gofus/protocol/frontend/msg"
-	"github.com/Blackrush/gofus/realm/db"
 	"github.com/Blackrush/gofus/realm/network/frontend"
 	"log"
 )
@@ -38,16 +37,33 @@ func HandleClientData(ctx frontend.Service, client frontend.Client, arg protocol
 		handle_client_player_selection(ctx, client, m)
 	case *msg.GameContextCreateReq:
 		handle_client_game_context_create(ctx, client, m)
+	case *msg.ContextInfosReq:
+		handle_client_context_infos(ctx, client, m)
 	}
 }
 
 func handle_client_game_context_create(ctx frontend.Service, client frontend.Client, m *msg.GameContextCreateReq) {
 	switch m.Type {
 	case msg.SoloContextType:
+		client.Send(&msg.GameContextCreateResp{msg.SoloContextType})
+		// todo send player's characteristics
+		client.Send(&msg.SetCurrentMapData{
+			Id:   client.Player().Position.Map.Id,
+			Date: client.Player().Position.Map.Date,
+			Key:  client.Player().Position.Map.Key,
+		})
 
 	case msg.FightContextType:
 		fallthrough
 	default:
 		log.Print("context type %d is not implemented yet", m.Type)
 	}
+}
+
+func handle_client_context_infos(ctx frontend.Service, client frontend.Client, m *msg.ContextInfosReq) {
+	// todo send current map actors
+	client.Send(&msg.SetMapLoaded{})
+	client.Send(&msg.SetNumberOfFights{
+		Fights: 0,
+	})
 }

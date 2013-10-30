@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/Blackrush/gofus/protocol/frontend/msg"
+	"github.com/Blackrush/gofus/realm/db"
 	"github.com/Blackrush/gofus/realm/network/frontend"
 )
 
