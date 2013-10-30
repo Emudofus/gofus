@@ -1,28 +1,13 @@
-package frontend
+package impl
 
 import (
 	"bytes"
 	"github.com/Blackrush/gofus/protocol/backend"
 	protocol "github.com/Blackrush/gofus/protocol/frontend"
-	"github.com/Blackrush/gofus/protocol/frontend/msg"
 	"github.com/Blackrush/gofus/realm/db"
-	"io"
 	"log"
 	"net"
 )
-
-type Client interface {
-	io.WriteCloser
-	protocol.Sender
-	protocol.CloseWither
-	Alive() bool
-
-	Id() uint64
-	UserInfos() *backend.UserInfos
-	SetUserInfos(userInfos backend.UserInfos)
-	Player() *db.Player
-	SetPlayer(player *db.Player)
-}
 
 type net_client struct {
 	net.Conn
@@ -88,18 +73,4 @@ func (client *net_client) Player() *db.Player {
 
 func (client *net_client) SetPlayer(player *db.Player) {
 	client.player = player
-}
-
-func client_send_player_list(ctx *context, client *net_client) {
-	var players []*db.Player
-	var ok bool
-	if players, ok = ctx.players.GetByOwnerId(uint(client.userInfos.Id)); !ok {
-		players = make([]*db.Player, 0, 0)
-	}
-
-	client.Send(&msg.PlayersResp{
-		ServerId:        ctx.config.ServerId,
-		SubscriptionEnd: client.userInfos.SubscriptionEnd,
-		Players:         players,
-	})
 }

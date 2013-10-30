@@ -6,7 +6,7 @@ import (
 	realmdb "github.com/Blackrush/gofus/realm/db"
 	staticdb "github.com/Blackrush/gofus/realm/db/static"
 	bnetwork "github.com/Blackrush/gofus/realm/network/backend"
-	fnetwork "github.com/Blackrush/gofus/realm/network/frontend"
+	fnetwork "github.com/Blackrush/gofus/realm/network/frontend/impl"
 	"github.com/Blackrush/gofus/shared/db"
 	_ "github.com/lib/pq"
 	"os"
