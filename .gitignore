@@ -81,3 +81,7 @@ project/plugins/project/
 
 # golang
 *.test
+
+# gofus project (Makefile output)
+login.a
+realm.a
