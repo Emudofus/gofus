@@ -16,7 +16,7 @@ type PlayerColor int
 
 func (color PlayerColor) String() string {
 	if int(color) != -1 {
-		return fmt.Sprintf("%x", color)
+		return fmt.Sprintf("%x", int(color))
 	}
 	return ""
 }
