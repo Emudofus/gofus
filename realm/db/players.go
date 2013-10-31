@@ -4,8 +4,32 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Blackrush/gofus/realm/db/static"
+	"github.com/Blackrush/gofus/shared/db"
 	"log"
 )
+
+type stats_map map[db.StatType]db.BaseStat
+
+type PlayerStats struct {
+	stats stats_map
+}
+
+func new_player_stats() *PlayerStats {
+	s := &PlayerStats{
+		stats: make(stats_map),
+	}
+
+	return s
+}
+
+func (s *PlayerStats) GetStat(t db.StatType) (db.BaseStat, bool) {
+	stat, ok := s.stats[t]
+	return stat, ok
+}
+
+func (s *PlayerStats) Stats() map[db.StatType]db.BaseStat {
+	return s.stats
+}
 
 type PlayerExperience struct {
 	Level      int
@@ -91,6 +115,7 @@ type Player struct {
 	Appearance PlayerAppearance
 	Experience PlayerExperience
 	Position   PlayerPosition
+	Stats      *PlayerStats
 
 	persisted bool
 }
@@ -324,6 +349,8 @@ func (p *Players) NewPlayer(userId uint, name string, breed int, gender bool, fi
 	}
 
 	player.Position = p.player_default_pos
+
+	player.Stats = new_player_stats()
 
 	return player
 }

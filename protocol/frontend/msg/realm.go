@@ -3,6 +3,7 @@ package msg
 import (
 	"fmt"
 	"github.com/Blackrush/gofus/realm/db"
+	sdb "github.com/Blackrush/gofus/shared/db"
 	"io"
 	"strings"
 	"time"
@@ -306,3 +307,64 @@ type GameContextCreateErrorResp struct{}
 func (msg *GameContextCreateErrorResp) Opcode() string                 { return "GCE" }
 func (msg *GameContextCreateErrorResp) Serialize(out io.Writer) error  { return nil }
 func (msg *GameContextCreateErrorResp) Deserialize(in io.Reader) error { return nil }
+
+type SetPlayerStats struct {
+	Experience            uint64
+	LowerExperienceLevel  uint64
+	HigherExperienceLevel uint64
+
+	Kamas uint64
+
+	BoostStatsPts  int
+	BoostSpellsPts int
+
+	AlignId    int
+	AlignLevel int
+	AlignGrade int
+	Honor      int
+	Dishonor   int
+	EnabledPvp bool
+
+	Life    int
+	MaxLife int
+
+	Energy    int
+	MaxEnergy int
+
+	Stats sdb.StatList
+}
+
+func (msg *SetPlayerStats) Opcode() string { return "As" }
+
+func (msg *SetPlayerStats) Serialize(out io.Writer) error {
+	fmt.Fprintf(out, "%d,%d,%d", msg.Experience, msg.LowerExperienceLevel, msg.HigherExperienceLevel)
+
+	fmt.Fprintf(out, "|%d", msg.Kamas)
+
+	fmt.Fprintf(out, "|%d|%d", msg.BoostStatsPts, msg.BoostSpellsPts)
+
+	fmt.Fprintf(out, "|%d~%d,%d,%d,%d,%d", msg.AlignId, msg.AlignLevel, msg.AlignGrade, msg.Honor, msg.Dishonor, btoi(msg.EnabledPvp))
+
+	fmt.Fprintf(out, "|%d,%d", msg.Life, msg.MaxLife)
+
+	fmt.Fprintf(out, "|%d,%d", msg.Energy, msg.MaxEnergy)
+
+	for _, o := range msg.Stats.Stats() {
+		fmt.Fprint(out, "|")
+
+		switch stat := o.(type) {
+		case sdb.MinStat:
+			fmt.Fprintf(out, "%d", stat.Total())
+		case sdb.Stat:
+			fmt.Fprintf(out, "%d,%d,%d,%d", stat.Base(), stat.Equipment(), stat.Gift(), stat.Context())
+		case sdb.ExStat:
+			fmt.Fprintf(out, "%d,%d,%d,%d,%d", stat.Base(), stat.Equipment(), stat.Gift(), stat.Context(), stat.Total())
+		}
+	}
+
+	return nil
+}
+
+func (msg *SetPlayerStats) Deserialize(in io.Reader) error {
+	return nil
+}

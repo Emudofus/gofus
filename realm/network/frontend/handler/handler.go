@@ -46,7 +46,34 @@ func handle_client_game_context_create(ctx frontend.Service, client frontend.Cli
 	switch m.Type {
 	case msg.SoloContextType:
 		client.Send(&msg.GameContextCreateResp{msg.SoloContextType})
-		// todo send player's characteristics
+
+		p := client.Player()
+		client.Send(&msg.SetPlayerStats{
+			Experience:            p.Experience.Experience,
+			LowerExperienceLevel:  0,
+			HigherExperienceLevel: 1,
+
+			Kamas: 0,
+
+			BoostStatsPts:  0,
+			BoostSpellsPts: 0,
+
+			AlignId:    0,
+			AlignLevel: 0,
+			AlignGrade: 0,
+			Honor:      0,
+			Dishonor:   0,
+			EnabledPvp: false,
+
+			Life:    0,
+			MaxLife: 1,
+
+			Energy:    0,
+			MaxEnergy: 1,
+
+			Stats: p.Stats,
+		})
+
 		client.Send(&msg.SetCurrentMapData{
 			Id:   client.Player().Position.Map.Id,
 			Date: client.Player().Position.Map.Date,
