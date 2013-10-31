@@ -227,7 +227,41 @@ func player_values(player *Player, with_id, id_last bool) []interface{} {
 	return result
 }
 
-func player_ptrvalues(player *Player) []interface{} {
+type map_sql_scanner struct {
+	maps *static.Maps
+	m    **static.Map
+}
+
+func (s *map_sql_scanner) Scan(o interface{}) error {
+	switch v := o.(type) {
+	case int64:
+		if m, ok := s.maps.GetById(int(v)); ok {
+			*s.m = m
+			return nil
+		}
+
+		return fmt.Errorf("unknown map %d", v)
+	}
+
+	return fmt.Errorf("expected map's id but got %T", o)
+}
+
+type mapcell_sql_scanner struct {
+	m **static.Map
+	c **static.MapCell
+}
+
+func (s *mapcell_sql_scanner) Scan(o interface{}) error {
+	switch v := o.(type) {
+	case int64:
+		*s.c = (*s.m).GetCell(uint16(v))
+		return nil
+	}
+
+	return fmt.Errorf("expected cell's id but got %T", o)
+}
+
+func player_ptrvalues(players *Players, player *Player) []interface{} {
 	return []interface{}{
 		&player.Id,
 		&player.OwnerId,
@@ -240,6 +274,8 @@ func player_ptrvalues(player *Player) []interface{} {
 		&player.Appearance.Colors.Third,
 		&player.Experience.Level,
 		&player.Experience.Experience,
+		&map_sql_scanner{players.maps, &player.Position.Map},
+		&mapcell_sql_scanner{&player.Position.Map, &player.Position.Cell},
 	}
 }
 
@@ -254,19 +290,9 @@ func (p *Players) find_all() ([]*Player, bool) {
 	for rows.Next() {
 		player := &Player{persisted: true}
 
-		var currentMap int
-		var currentCell uint16
-
-		if err := rows.Scan(append(player_ptrvalues(player), &currentMap, &currentCell)...); err != nil {
+		if err := rows.Scan(player_ptrvalues(p, player)...); err != nil {
 			log.Print(err)
 			return nil, false
-		}
-
-		if m, ok := p.maps.GetById(currentMap); ok {
-			player.Position.Map = m
-			player.Position.Cell = m.GetCell(currentCell)
-		} else {
-			panic(fmt.Sprintf("unknown map %d", currentMap))
 		}
 
 		result = append(result, player)
@@ -304,7 +330,9 @@ func (p *Players) NewPlayer(userId uint, name string, breed int, gender bool, fi
 
 func (p *Players) Persist(player *Player) (inserted bool, success bool) {
 	if !player.persisted {
-		stmt, err := p.db.Prepare("insert into players(owner_id, name, breed, gender, skin, first_color, second_color, third_color, level, experience, current_map, current_cell) values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) returning id;")
+		stmt, err := p.db.Prepare("insert into players" +
+			"(owner_id, name, breed, gender, skin, first_color, second_color, third_color, level, experience, current_map, current_cell, vitality, wisdom, strength, intelligence, chance, agility) " +
+			"values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 0, 0, 0, 0, 0, 0) returning id;")
 		//defer stmt.Close()
 
 		if err != nil {
