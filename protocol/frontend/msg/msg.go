@@ -51,6 +51,7 @@ func init() {
 	producers["GC"] = func() protocol.MessageContainer { return new(GameContextCreateReq) }
 	producers["GI"] = func() protocol.MessageContainer { return new(ContextInfosReq) }
 	producers["Ir"] = func() protocol.MessageContainer { return new(SetScreenInfos) }
+	producers["BD"] = func() protocol.MessageContainer { return new(CurrentDateReq) }
 }
 
 func New(opcode string) (protocol.MessageContainer, bool) {

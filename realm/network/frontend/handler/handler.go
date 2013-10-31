@@ -5,6 +5,7 @@ import (
 	"github.com/Blackrush/gofus/protocol/frontend/msg"
 	"github.com/Blackrush/gofus/realm/network/frontend"
 	"log"
+	"time"
 )
 
 func HandleClientConnection(ctx frontend.Service, client frontend.Client) {
@@ -39,6 +40,8 @@ func HandleClientData(ctx frontend.Service, client frontend.Client, arg protocol
 		handle_client_game_context_create(ctx, client, m)
 	case *msg.ContextInfosReq:
 		handle_client_context_infos(ctx, client, m)
+	case *msg.CurrentDateReq:
+		handle_client_current_date(ctx, client, m)
 	}
 }
 
@@ -74,10 +77,11 @@ func handle_client_game_context_create(ctx frontend.Service, client frontend.Cli
 			Stats: p.Stats,
 		})
 
+		m := client.Player().Position.Map
 		client.Send(&msg.SetCurrentMapData{
-			Id:   client.Player().Position.Map.Id,
-			Date: client.Player().Position.Map.Date,
-			Key:  client.Player().Position.Map.Key,
+			Id:   m.Id,
+			Date: m.Date,
+			Key:  m.Key,
 		})
 
 	case msg.FightContextType:
@@ -92,5 +96,11 @@ func handle_client_context_infos(ctx frontend.Service, client frontend.Client, m
 	client.Send(&msg.SetMapLoaded{})
 	client.Send(&msg.SetNumberOfFights{
 		Fights: 0,
+	})
+}
+
+func handle_client_current_date(ctx frontend.Service, client frontend.Client, m *msg.CurrentDateReq) {
+	client.Send(&msg.CurrentDateResp{
+		Current: time.Now(),
 	})
 }
