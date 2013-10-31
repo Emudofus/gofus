@@ -85,3 +85,4 @@ project/plugins/project/
 # gofus project (Makefile output)
 login.a
 realm.a
+*.log
