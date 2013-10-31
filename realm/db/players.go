@@ -105,6 +105,7 @@ type Players struct {
 	config PlayersConfig
 	maps   *static.Maps
 
+	player_default_pos  PlayerPosition
 	players             []*Player
 	players_by_owner_id playersByOwnerId
 }
@@ -134,6 +135,15 @@ func NewPlayers(db *sql.DB, config PlayersConfig, maps *static.Maps) *Players {
 func (p *Players) Load() {
 	if p.players_by_owner_id != nil {
 		panic("player repository already loaded")
+	}
+
+	if m, ok := p.maps.GetById(p.config.StartMap); ok {
+		p.player_default_pos = PlayerPosition{
+			Map:  m,
+			Cell: m.GetCell(p.config.StartCell),
+		}
+	} else {
+		panic(fmt.Sprintf("unknown map %d", p.config.StartMap))
 	}
 
 	p.players_by_owner_id = make(map[uint][]*Player)
@@ -286,11 +296,8 @@ func (p *Players) NewPlayer(userId uint, name string, breed int, gender bool, fi
 		Level:      1,
 		Experience: 0,
 	}
-	m, _ := p.maps.GetById(p.config.StartMap)
-	player.Position = PlayerPosition{
-		Map:  m,
-		Cell: m.GetCell(p.config.StartCell),
-	}
+
+	player.Position = p.player_default_pos
 
 	return player
 }
