@@ -320,6 +320,8 @@ func (p *Players) find_all() ([]*Player, bool) {
 			return nil, false
 		}
 
+		player.Stats = new_player_stats()
+
 		result = append(result, player)
 	}
 
